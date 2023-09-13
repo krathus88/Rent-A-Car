@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>CodeLab Solutions</title>
+    <!-- website icon -->
+    <link href="{{ url_for('static', filename='icon.ico') }}" rel="icon" type="image/x-icon">
+    <!-- Folha de estilo (main.css) -->
+    <link href="{{ url_for('static', filename='main.css') }}" rel="stylesheet">
+    <!-- Bootstrap JQuery -->
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.min.js"></script>
+    <!-- Bootstrap 4 -->
+    <link crossorigin="anonymous" href="https://cdn.jsdelivr.net/npm/bootswatch@4.5.2/dist/lux/bootstrap.min.css"
+          integrity="sha384-9+PGKSqjRdkeAU7Eu4nkJU8RFaH8ace8HGXnkiKMP9I9Te0GJ4/km3L1Z8tXigpG" rel="stylesheet">
+    <!-- Bootstrap Datepicker -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap-datepicker@1.9.0/dist/js/bootstrap-datepicker.min.js"></script>
+    <!-- Include Bootstrap Datepicker CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-datepicker@1.9.0/dist/css/bootstrap-datepicker.min.css"
+          rel="stylesheet">
+    <!-- Intl Tel Input CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.3/css/intlTelInput.min.css">
+    <!-- Intl Tel Input -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.3/js/intlTelInput.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            if (sessionStorage.getItem("selectedVehicleClass") === "Economy") {
+                $(".border-secondary").removeClass("border-secondary").addClass("border-info");
+            } else if (sessionStorage.getItem("selectedVehicleClass") === "Gold") {
+                $(".border-secondary").removeClass("border-secondary").addClass("border-warning");
+            }
+
+            // Retrieve the stored picked dates and update the values in the HTML
+            const pickupDateSpan = document.getElementById('pick-up-date').getElementsByTagName("span")[0];
+            const dropoffDateSpan = document.getElementById('drop-off-date').getElementsByTagName("span")[0];
+            pickupDateSpan.textContent = sessionStorage.getItem("pickupDate");
+            dropoffDateSpan.textContent = sessionStorage.getItem("dropoffDate");
+
+            // Retrieve the stored Price and update the value in the HTML
+            const pricePerDaySpan = document.getElementById('price-per-day').getElementsByTagName("small")[0];
+            const totalPriceSpan = document.getElementById('total-price').getElementsByTagName("span")[0];
+            pricePerDaySpan.textContent = sessionStorage.getItem("selectedPricePerDay") + "€/ day";
+            totalPriceSpan.textContent = sessionStorage.getItem("selectedTotalPrice") + "€";
+        });
+
+        // Submit the logout form and redirect to the login page with a success message
+        function logoutAndRedirect() {
+            // Clear stored dates from local storage
+            sessionStorage.clear();
+
+            // Submit the logout form
+            document.getElementById("logout-form").submit();
+        }
+    </script>
+    <style>
+        .sticky-right-fieldset {
+            position: sticky;
+            top: 100px;
+            height: 100%;
+        }
+    </style>
+</head>
+<body style="overflow: auto; height: 100vh">
+<!-- Header -->
+<nav class="navbar navbar-expand-lg navbar-dark fixed-top bg-primary" style="padding-top: 0; padding-bottom: 0;">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="/main-page" type="submit">CodeLab Solutions</a>
+        <button aria-controls="navbarColor01" aria-expanded="false" aria-label="Toggle navigation"
+                class="navbar-toggler collapsed" data-target="#navbarColor01" data-toggle="collapse" type="button">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="navbar-collapse collapse" id="navbarColor01" style="">
+            <ul class="navbar-nav mr-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="/main-page">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/economy-class">Economy</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/silver-class">Silver</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/gold-class">Gold</a>
+                </li>
+            </ul>
+            <ul class="navbar-nav">
+                <li class="nav-item dropdown">
+                    <a aria-expanded="false" aria-haspopup="true" class="nav-link dropdown-toggle" data-toggle="dropdown"
+                       href="#" role="button">
+                        <img alt="Profile" src="/static/profile.png" style="max-height: 65px;">
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-right">
+                        <form action="/logout" id="logout-form" method="POST">
+                            <a class="dropdown-item" href="#Logout" onclick="logoutAndRedirect()">Logout</a>
+                        </form>
+                    </div>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+<!-- Body -->
+<div class="pb-4 px-4" style="padding-top: 125px">
+    <div class="card border-secondary mx-auto" style="min-width: 1000px; max-width: 1200px; width: 100%;">
+        <div class="card card-header">
+            <!-- Header -->
+            <div class="card-body text-center" style="padding-bottom: 0px">
+                <h5>Marco Ribeiro,</h5>
+                <h5>you have sucessfully booked your car, please see the details below</h5>
+                <hr class="border-secondary">
+            </div>
+            <!-- Booking Summary -->
+            <div class="card-body row" style="user-select: text">
+                <img alt="{{ vehicle.name }} image" src="{{ url_for('static', filename=vehicle.image_file_name) }}" style="width: 35%; user-select: none">
+                <!-- Features -->
+                <div class="card-body">
+                    <h3>{{ vehicle.name }}</h3>
+                    <div class="d-flex">
+                        <!-- Number of People -->
+                        <div style="width: 18px; height: 18px; min-width: 18px; min-height: 18px;">
+                            <svg height="24" style="fill: rgb(191, 191, 191); transform: rotate(0deg); width: 18px; height: 18px; min-width: 18px; min-height: 18px;"
+                                 viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"
+                                 xmlns:xlink="http://www.w3.org/1999/xlink">
+                                <defs>
+                                    <path d="M17.918 7.718a2.765 2.765 0 011.828 2.596v11.062h-8.832V10.314c0-1.195.764-2.212 1.829-2.596a3.884 3.884 0 005.175 0zm-11.244.257a3.584 3.584 0 003.558.59 3.838 3.838 0 00-.423 1.75v9.805H5v-9.607c0-1.136.69-2.114 1.674-2.538zm2.29-5.271c1.24 0 2.269.91 2.46 2.096 0 .16.013.317.032.472a2.497 2.497 0 01-2.492 2.423 2.499 2.499 0 01-2.496-2.496 2.498 2.498 0 012.496-2.495zM15.33 2c1.544 0 2.8 1.256 2.8 2.8 0 1.545-1.256 2.8-2.8 2.8a2.804 2.804 0 01-2.8-2.8c0-1.544 1.256-2.8 2.8-2.8z"
+                                          id="pax_svg__a"></path>
+                                </defs>
+                                <use fill-rule="evenodd" xlink:href="#pax_svg__a"></use>
+                            </svg>
+                        </div>
+                        <p class="m-0">
+                            {{ vehicle.num_people }}&nbsp&nbsp
+                        </p>
+                        <!-- Number of Doors -->
+                        <div style="width: 18px; height: 18px; min-width: 18px; min-height: 18px;">
+                            <svg height="24" style="fill: rgb(191, 191, 191); transform: rotate(0deg); width: 18px; height: 18px; min-width: 18px; min-height: 18px;"
+                                 viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"
+                                 xmlns:xlink="http://www.w3.org/1999/xlink">
+                                <defs>
+                                    <path d="M18.897 11.009H5.773c-.5-.198-.567-.496-.36-.86l4.719-4.656c.106-.09.19-.214.375-.187h8.39v5.703zm-.66 3.051h-1.81a.38.38 0 110-.762h1.81a.381.381 0 010 .762zm-7.67-10.056a1.456 1.456 0 00-.11-.004c-.64 0-1.033.373-1.169.502l-.036.03L4.37 9.349l-.09.156c-.23.407-.293.773-.278 1.076L4 10.578v9.3h16.198V4.005h-9.63z"
+                                          id="doors_svg__a"></path>
+                                </defs>
+                                <use fill-rule="evenodd" xlink:href="#doors_svg__a"></use>
+                            </svg>
+                        </div>
+                        <p class="m-0">
+                            &nbsp{{ vehicle.num_doors }}&nbsp&nbsp
+                        </p>
+                        <!-- Luggage -->
+                        <div style="width: 18px; height: 18px; min-width: 18px; min-height: 18px;">
+                            <svg height="24" style="fill: rgb(191, 191, 191); transform: rotate(0deg); width: 18px; height: 18px; min-width: 18px; min-height: 18px;"
+                                 viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"
+                                 xmlns:xlink="http://www.w3.org/1999/xlink">
+                                <defs>
+                                    <path d="M14 12h-4c-.6 0-1-.4-1-1s.4-1 1-1h4c.6 0 1 .4 1 1s-.4 1-1 1zm-3-5h2V4h-2v3zm4 0V4c.6 0 1-.4 1-1s-.4-1-1-1H9c-.6 0-1 .4-1 1s.4 1 1 1v3c-1.7 0-3 1.3-3 3v8c0 1.3.8 2.4 2 2.8v.8c0 .2.2.4.4.4h1.2c.2 0 .4-.2.4-.4V21h4v.6c0 .2.2.4.4.4h1.2c.2 0 .4-.2.4-.4v-.8c1.2-.4 2-1.5 2-2.8v-8c0-1.7-1.3-3-3-3z"
+                                          id="luggage_svg__a"></path>
+                                </defs>
+                                <use fill-rule="evenodd" xlink:href="#luggage_svg__a"></use>
+                            </svg>
+                        </div>
+                        <p class="m-0">
+                            &nbsp{{ vehicle.luggage }}&nbsp&nbsp
+                        </p>
+                        <!-- Gear Type -->
+                        <div style="width: 18px; height: 18px; min-width: 18px; min-height: 18px;">
+                            <svg height="24" style="fill: rgb(191, 191, 191); transform: rotate(0deg); width: 18px; height: 18px; min-width: 18px; min-height: 18px;"
+                                 viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"
+                                 xmlns:xlink="http://www.w3.org/1999/xlink">
+                                <defs>
+                                    <path d="M17.875 4a2.125 2.125 0 00-1.063 3.963v3.474h-4.249V7.963a2.133 2.133 0 001.062-1.838 2.125 2.125 0 10-3.188 1.838v3.474h-4.25V7.963A2.122 2.122 0 005.125 4a2.125 2.125 0 00-1.063 3.963v9.073A2.122 2.122 0 005.125 21a2.125 2.125 0 001.063-3.964v-3.474h4.25v3.475A2.122 2.122 0 0011.5 21a2.125 2.125 0 001.063-3.963v-3.474h5.312c.587 0 1.063-.476 1.063-1.063V7.963A2.122 2.122 0 0017.875 4"
+                                          id="transmission_svg__a"></path>
+                                </defs>
+                                <use fill-rule="evenodd" xlink:href="#transmission_svg__a"></use>
+                            </svg>
+                        </div>
+                        <p class="m-0">
+                            &nbsp{{ vehicle.gear_type }}&nbsp&nbsp
+                        </p>
+                        <!-- Air Conditioning -->
+                        <div style="width: 18px; height: 18px; min-width: 18px; min-height: 18px;">
+                            <svg height="24" style="fill: rgb(191, 191, 191); transform: rotate(0deg); width: 18px; height: 18px; min-width: 18px; min-height: 18px;"
+                                 viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"
+                                 xmlns:xlink="http://www.w3.org/1999/xlink">
+                                <defs>
+                                    <path d="M12.001 3a.774.774 0 00-.782.766v1.431L9.85 3.734a.796.796 0 00-1.107-.047.756.756 0 00-.047 1.083l2.523 2.696v3.207L8.384 9.07 7.26 5.58a.789.789 0 00-.983-.5.765.765 0 00-.51.962l.61 1.894-1.267-.717a.79.79 0 00-1.07.281.756.756 0 00.286 1.047l1.267.716-1.98.43a.766.766 0 00-.595.913.78.78 0 00.933.583l3.65-.791L10.436 12 7.6 13.603l-3.648-.792a.781.781 0 00-.933.582.767.767 0 00.594.915l1.98.43-1.266.715a.757.757 0 00-.286 1.047.786.786 0 001.069.28l1.267-.716-.61 1.895c-.13.403.1.834.51.962a.81.81 0 00.236.035.782.782 0 00.747-.535l1.124-3.491 2.835-1.603v3.204l-2.525 2.7a.756.756 0 00.048 1.082.795.795 0 001.106-.047l1.37-1.465v1.433c0 .423.35.766.783.766a.774.774 0 00.783-.766V18.8l1.37 1.466a.792.792 0 001.105.048.754.754 0 00.05-1.084l-2.525-2.7v-3.203l2.834 1.602 1.122 3.49a.781.781 0 00.981.5.764.764 0 00.512-.96l-.609-1.896 1.267.717c.122.07.256.102.39.102.27 0 .533-.137.678-.383a.756.756 0 00-.286-1.047l-1.266-.716 1.98-.43a.767.767 0 00.594-.914.782.782 0 00-.933-.582l-3.648.791L13.566 12l2.834-1.602 3.648.791a.778.778 0 00.932-.583.767.767 0 00-.595-.913l-1.978-.43 1.267-.716a.757.757 0 00.285-1.047.79.79 0 00-1.068-.28l-1.266.715.609-1.893a.764.764 0 00-.512-.962.787.787 0 00-.981.5l-1.122 3.49-2.835 1.603V7.467l2.524-2.698a.755.755 0 00-.05-1.083.794.794 0 00-1.104.047l-1.37 1.465V3.766A.774.774 0 0012 3"
+                                          id="air_conditionning_svg__a"></path>
+                                </defs>
+                                <use fill-rule="evenodd"
+                                     xlink:href="#air_conditionning_svg__a"></use>
+                            </svg>
+                        </div>
+                        <p class="m-0">
+                            &nbsp{{ vehicle.air_conditioning }}
+                        </p>
+                    </div>
+                    <!-- Checkmarks -->
+                    <div class="d-flex mt-3">
+                        <div style="width: 24px; height: 24px; min-width: 24px; min-height: 24px;">
+                            <svg height="24" style="fill: rgb(0, 153, 0); transform: rotate(0deg); width: 24px; height: 24px; min-width: 24px; min-height: 24px;" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+                                <defs>
+                                    <path d="M15.52 8.031l1.432 1.203a.134.134 0 01.016.188l-5.84 6.96a.134.134 0 01-.115.048.135.135 0 01-.076-.031l-3.888-3.263a.134.134 0 01-.018-.189l1.203-1.433a.134.134 0 01.189-.016l2.355 1.976 4.553-5.426a.134.134 0 01.188-.017" id="tick_svg__a"></path>
+                                </defs>
+                                <use fill-rule="evenodd" xlink:href="#tick_svg__a"></use>
+                            </svg>
+                        </div>
+                        <p>Collision Damage Protection</p>
+                    </div>
+                    <div class="d-flex">
+                        <div style="width: 24px; height: 24px; min-width: 24px; min-height: 24px;">
+                            <svg height="24"
+                                 style="fill: rgb(0, 153, 0); transform: rotate(0deg); width: 24px; height: 24px; min-width: 24px; min-height: 24px;"
+                                 viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"
+                                 xmlns:xlink="http://www.w3.org/1999/xlink">
+                                <defs>
+                                    <path d="M15.52 8.031l1.432 1.203a.134.134 0 01.016.188l-5.84 6.96a.134.134 0 01-.115.048.135.135 0 01-.076-.031l-3.888-3.263a.134.134 0 01-.018-.189l1.203-1.433a.134.134 0 01.189-.016l2.355 1.976 4.553-5.426a.134.134 0 01.188-.017"
+                                          id="tick_svg__a"></path>
+                                </defs>
+                                <use fill-rule="evenodd" xlink:href="#tick_svg__a"></use>
+                            </svg>
+                        </div>
+                        <p>Theft Protection</p>
+                    </div>
+                    <div class="d-flex">
+                        <div style="width: 24px; height: 24px; min-width: 24px; min-height: 24px;">
+                            <svg height="24"
+                                 style="fill: rgb(0, 153, 0); transform: rotate(0deg); width: 24px; height: 24px; min-width: 24px; min-height: 24px;"
+                                 viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"
+                                 xmlns:xlink="http://www.w3.org/1999/xlink">
+                                <defs>
+                                    <path d="M15.52 8.031l1.432 1.203a.134.134 0 01.016.188l-5.84 6.96a.134.134 0 01-.115.048.135.135 0 01-.076-.031l-3.888-3.263a.134.134 0 01-.018-.189l1.203-1.433a.134.134 0 01.189-.016l2.355 1.976 4.553-5.426a.134.134 0 01.188-.017"
+                                          id="tick_svg__a"></path>
+                                </defs>
+                                <use fill-rule="evenodd" xlink:href="#tick_svg__a"></use>
+                            </svg>
+                        </div>
+                        <p>Full Tank</p>
+                    </div>
+                </div>
+                <!-- Price -->
+                <div class="card-body my-auto" >
+                    <div class="text-body-secondary">
+                        <div class="d-flex justify-content-center">
+                            <p>Renting from:&nbsp;</p>
+                            <h5 id="pick-up-date"><span></span></h5>
+                        </div>
+                        <div class="d-flex justify-content-center">
+                            <p>Until:&nbsp;</p>
+                            <h5 id="drop-off-date"><span></span></h5>
+                        </div>
+                    </div>
+                    <hr class="border-secondary">
+                    <h4 class="text-center" id="total-price">Total: <span>226,31</span></h4>
+                    <h6 class="text-center" id="price-per-day">
+                        <small></small>
+                    </h6>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

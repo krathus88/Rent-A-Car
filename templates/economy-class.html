@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>CodeLab Solutions</title>
+    <!-- website icon -->
+    <link rel="icon" href="{{ url_for('static', filename='icon.ico') }}" type="image/x-icon">
+    <!-- Folha de estilo (main.css) -->
+    <link href="{{ url_for('static', filename='main.css') }}" rel="stylesheet">
+    <!-- Bootstrap JQuery -->
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.min.js"></script>
+    <!-- Bootstrap 4 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootswatch@4.5.2/dist/lux/bootstrap.min.css" integrity="sha384-9+PGKSqjRdkeAU7Eu4nkJU8RFaH8ace8HGXnkiKMP9I9Te0GJ4/km3L1Z8tXigpG" crossorigin="anonymous">
+    <!-- Bootstrap Datepicker -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap-datepicker@1.9.0/dist/js/bootstrap-datepicker.min.js"></script>
+    <!-- Include Bootstrap Datepicker CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-datepicker@1.9.0/dist/css/bootstrap-datepicker.min.css"
+          rel="stylesheet">
+    <script>
+        let numDays;
+
+        $(document).ready(function() {
+            // Get the current date
+            let today = "{{ today }}";
+            let currentDate = new Date(today);
+            let currentDateString = currentDate.toLocaleDateString("en-CA").split('/').reverse().join('-'); // Format the date as "dd/mm/yyyy"
+
+            // Set the minimum date for the pick-up and drop-off date inputs
+            let pickupDateInput = document.getElementById("pickup-date-input");
+            let dropoffDateInput = document.getElementById("dropoff-date-input");
+            pickupDateInput.min = currentDateString;
+            dropoffDateInput.min = currentDateString;
+
+            // Retrieve the stored picked dates
+            let storedPickupDate = sessionStorage.getItem("pickupDate");
+            let storedDropoffDate = sessionStorage.getItem("dropoffDate");
+
+            if (storedPickupDate) {
+                pickupDateInput.value = storedPickupDate;
+            }
+            if (storedDropoffDate) {
+                dropoffDateInput.value = storedDropoffDate;
+            }
+
+            // Check if the style change should be applied and display the table container
+            let shouldDisplayTableContainer = sessionStorage.getItem("shouldDisplayTableContainer");
+            if (shouldDisplayTableContainer === "true") {
+                document.querySelector(".table-container").style.display = "block";
+            }
+
+            // Initialize the datepickers
+            $('.date').datepicker({
+                format: 'dd/mm/yyyy',
+                startDate: today,
+                todayBtn: true,
+                todayHighlight: true,
+                autoclose: true,
+                beforeShowDay: function(date) {
+                    let currentDate = new Date();
+                    let upcomingDates = getUpcomingDates();
+
+                    let dateStr = date.toLocaleDateString("en-CA");
+                    return [date >= currentDate && upcomingDates.includes(dateStr), ""];
+                }
+            });
+
+            // Checks if selected dates are coherent, if not, corrects accordingly
+            pickupDateInput.onchange = function() {
+                let pickupDateParts = pickupDateInput.value.split("/");
+                let dropoffDateParts = dropoffDateInput.value.split("/");
+
+                let pickupDate = new Date(
+                    parseInt(pickupDateParts[2]),
+                    parseInt(pickupDateParts[1]) - 1,
+                    parseInt(pickupDateParts[0])
+                );
+                let dropoffDate = new Date(
+                    parseInt(dropoffDateParts[2]),
+                    parseInt(dropoffDateParts[1]) - 1,
+                    parseInt(dropoffDateParts[0])
+                );
+
+                if (pickupDate >= dropoffDate) {
+                    dropoffDateInput.value = '';
+                }
+            };
+
+            dropoffDateInput.onchange = function() {
+                let pickupDateParts = pickupDateInput.value.split("/");
+                let dropoffDateParts = dropoffDateInput.value.split("/");
+
+                let pickupDate = new Date(
+                    parseInt(pickupDateParts[2]),
+                    parseInt(pickupDateParts[1]) - 1,
+                    parseInt(pickupDateParts[0])
+                );
+                let dropoffDate = new Date(
+                    parseInt(dropoffDateParts[2]),
+                    parseInt(dropoffDateParts[1]) - 1,
+                    parseInt(dropoffDateParts[0])
+                );
+
+                if (dropoffDate <= pickupDate || !pickupDateInput.value) {
+                    pickupDateInput.value = dropoffDateInput.value;
+                    dropoffDateInput.value = '';
+                }
+            };
+
+            // Set the default view to the current month and year
+            let currentMonth = currentDate.getMonth() + 1; // Months are zero-based
+            let currentYear = currentDate.getFullYear();
+            $('.date').datepicker('setView', currentMonth + '/' + currentYear);
+
+            // Calculate and display the total price if both dates are selected
+            if (pickupDateInput.value && dropoffDateInput.value) {
+                calculateTotalPriceForAllCars();
+                // Append selected dates as query parameters to the URL
+                let url = window.location.pathname + "?pickup_date=" + pickupDateInput.value + "&dropoff_date=" + dropoffDateInput.value + "&page=1";
+                history.pushState({}, '', url);
+            }
+
+            // On button click, display the available vehicles and the respective prices
+            document.getElementById("search-button").addEventListener("click", function() {
+                // Get the selected pickup and drop-off dates and pass them to the server
+                let pickupDateInput = document.getElementById("pickup-date-input");
+                let dropoffDateInput = document.getElementById("dropoff-date-input");
+
+                if (!pickupDateInput.value || !dropoffDateInput.value) {
+                    let errorMessage = document.getElementById("date-error-message");
+                    errorMessage.textContent = "Please select both pick-up and drop-off dates.";
+                    errorMessage.style.display = "block";
+                    return; // Do not proceed further if there's an error
+                }
+                calculateTotalPriceForAllCars();
+                let url = window.location.pathname + "?pickup_date=" + pickupDateInput.value + "&dropoff_date=" + dropoffDateInput.value + "&page=1";
+                window.location.href = url;
+            });
+
+            $('.table-container').on('click', '.select-button', function(event) {
+                // Prevent the default link behavior
+                event.preventDefault();
+                // Get the data attributes from the clicked button
+                let pricePerDay = $(this).data('price-per-day');
+
+                let totalPrice = pricePerDay * numDays;
+                let totalPriceFormatted = totalPrice.toFixed(2).replace(".", ",");
+
+                // Save the data to sessionStorage
+                sessionStorage.setItem("selectedPricePerDay", pricePerDay);
+                sessionStorage.setItem("selectedTotalPrice", totalPriceFormatted);
+                sessionStorage.setItem("selectedVehicleClass", "Economy");
+
+                window.location.href = $(this).attr('href');
+            });
+        });
+
+        function calculateTotalPriceForAllCars() {
+            let pickupDateInput = document.getElementById("pickup-date-input");
+            let dropoffDateInput = document.getElementById("dropoff-date-input");
+            let errorMessageInput = document.getElementById("date-error-message");
+
+            let pickupDate = pickupDateInput.value;
+            let dropoffDate = dropoffDateInput.value;
+
+            if (!pickupDate || !dropoffDate) {
+                errorMessageInput.textContent = "Please select both pick-up and drop-off dates.";
+                errorMessageInput.style.display = "block";
+                return;
+            }
+
+            let currentDate = new Date();
+            let pickupDateObj = new Date(pickupDate);
+            let dropoffDateObj = new Date(dropoffDate);
+
+            let pickupDateParts = pickupDateInput.value.split("/");
+            let dropoffDateParts = dropoffDateInput.value.split("/");
+
+            let pickupDateCalcTimeDiff = new Date(
+                parseInt(pickupDateParts[2]),
+                parseInt(pickupDateParts[1]) - 1,
+                parseInt(pickupDateParts[0])
+            );
+            let dropoffDateCalcTimeDiff = new Date(
+                parseInt(dropoffDateParts[2]),
+                parseInt(dropoffDateParts[1]) - 1,
+                parseInt(dropoffDateParts[0])
+            );
+
+            let timeDiff = Math.abs(dropoffDateCalcTimeDiff - pickupDateCalcTimeDiff);
+            numDays = Math.ceil(timeDiff / (1000 * 3600 * 24)); // Number of days rounded up
+
+            let carRows = document.getElementsByClassName("car-row");
+            for (let i = 0; i < carRows.length; i++) {
+                let carRow = carRows[i];
+
+                let pricePerDayElement = carRow.getElementsByClassName("price-per-day")[0];
+                let totalPriceElement = carRow.getElementsByClassName("total-price")[0];
+                let totalSpanElement = totalPriceElement.getElementsByTagName("span")[0];
+                let pricePerDay = parseFloat(carRow.getAttribute("data-price-per-day")); // Get price per day from data attribute
+
+                let total = pricePerDay * numDays;
+                let pricePerDayFormatted = pricePerDay.toFixed(2).replace(".", ","); // Format price per day
+                let totalFormatted = total.toFixed(2).replace(".", ","); // Change the decimal separator to a comma
+
+                pricePerDayElement.textContent = pricePerDayFormatted + "€/ day"; // Update price per day element
+                totalSpanElement.textContent = totalFormatted + "€";
+            }
+
+            // Store the selected dates in local storage
+            sessionStorage.setItem("pickupDate", pickupDate);
+            sessionStorage.setItem("dropoffDate", dropoffDate);
+            // If the validation passes, hide the error message
+            errorMessageInput.style.display = "none";
+            // If the validation passes, display the table container
+            document.querySelector(".table-container").style.display = "block";
+            // If the validation passes, set the flag to display the table container on page reload
+            sessionStorage.setItem("shouldDisplayTableContainer", "true");
+        }
+
+        // Function to get the upcoming dates as an array of strings in "yyyy-mm-dd" format
+        function getUpcomingDates() {
+            let today = new Date();
+            let upcomingDates = [];
+
+            for (let i = 1; i <= 30; i++) {
+                let upcomingDate = new Date();
+                upcomingDate.setDate(today.getDate() + i);
+                let day = upcomingDate.getDate().toString().padStart(2, "0");
+                let month = (upcomingDate.getMonth() + 1).toString().padStart(2, "0");
+                let year = upcomingDate.getFullYear();
+                let upcomingDateString = day + "/" + month + "/" + year;
+                upcomingDates.push(upcomingDateString);
+            }
+            return upcomingDates;
+        }
+
+        // Function to submit the logout form and redirect to the login page with a success message
+        function logoutAndRedirect() {
+            // Clear stored dates from local storage
+            sessionStorage.clear();
+
+            // Submit the logout form
+            document.getElementById("logout-form").submit();
+        }
+    </script>
+    <style>
+        .table img {
+            max-width: 100%;
+            height: auto;
+            min-width: 300px;
+        }
+        .table td h3 {
+            margin-top: 10px;
+        }
+        .dropdown-item:hover {
+            background-color: #e9ecef; /* Grey background color */
+        }
+    </style>
+</head>
+<body style="overflow: auto; height: 100vh">
+<!-- Header -->
+<nav class="navbar navbar-expand-lg navbar-dark fixed-top bg-primary" style="padding-top: 0; padding-bottom: 0;">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="/main-page" type="submit">CodeLab Solutions</a>
+        <button aria-controls="navbarColor01" aria-expanded="false" aria-label="Toggle navigation"
+                class="navbar-toggler collapsed" data-target="#navbarColor01" data-toggle="collapse" type="button">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="navbar-collapse collapse" id="navbarColor01" style="">
+            <ul class="navbar-nav mr-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="/main-page">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active" href="/economy-class">Economy
+                        <span class="sr-only">(current)</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/silver-class">Silver</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/gold-class">Gold</a>
+                </li>
+            </ul>
+            <ul class="navbar-nav">
+                <li class="nav-item dropdown">
+                    <a aria-expanded="false" aria-haspopup="true" class="nav-link dropdown-toggle" data-toggle="dropdown"
+                       href="#" role="button">
+                        <img alt="Profile" src="/static/profile.png" style="max-height: 65px;">
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-right">
+                        <form action="/logout" id="logout-form" method="POST">
+                            <a class="dropdown-item" href="#Logout" onclick="logoutAndRedirect()">Logout</a>
+                        </form>
+                    </div>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+<!-- Body -->
+<div class="px-4" style="padding-top: 125px">
+    <div class="card border-info mx-auto" style="min-width: 1000px;max-width: 1500px; width: 100%;">
+        <div class="card-header">
+            <div class="text-center">
+                <ul class="list-group">
+                    <li class="list-group-item-info d-flex justify-content-between align-items-center">
+                        <!-- Header // Class + Pick-up/Drop-off dates -->
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <h3 class="card-title my-auto">Economy Class</h3>
+                                <!-- Pick-up Date -->
+                                <div class="ml-auto">
+                                    <h6>Pick-up date</h6>
+                                    <div class="input-group date" data-date-autoclose="true"
+                                         data-date-format="dd/mm/yyyy" data-date-orientation="bottom"
+                                         data-provide="datepicker">
+                                        <input class="form-control text-center" id="pickup-date-input" min="{{ current_date }}"
+                                               placeholder="Select date" type="text" name="pickup_date" style="background-color: #f7f7f9" required readonly>
+                                        <div class="input-group-append"></div>
+                                    </div>
+                                </div>
+                                <!-- Drop-off Date -->
+                                <div class="mx-4">
+                                    <h6>Drop-off date</h6>
+                                    <div class="input-group date" data-date-autoclose="true"
+                                         data-date-format="dd/mm/yyyy" data-date-orientation="bottom"
+                                         data-provide="datepicker">
+                                        <input class="form-control text-center" id="dropoff-date-input"
+                                               placeholder="Select date" type="text" name="dropoff_date" style="background-color: #f7f7f9" required readonly>
+                                        <div class="input-group-append"></div>
+                                    </div>
+                                </div>
+                                <!-- Search Button -->
+                                <button class="btn btn-info" id="search-button" style="margin-top: 20px;"
+                                        type="button">
+                                    Search
+                                </button>
+                            </div>
+                            <div class="text-right" id="date-error-message"
+                                 style="color: red; margin-top: 10px; margin-right: 175px;">
+                            </div>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+            <!-- Cars container -->
+            <div class="table-container pt-1" style="display: none; user-select: none">
+                <table class="table table-hover">
+                    <tbody>
+                    <!-- Vehicles -->
+                    {% for vehicle in vehicles %}
+                    <tr class="table-default" style="user-select: text">
+                        <th scope="row" style="width: 25%; user-select: none">
+                            <img alt="{{ vehicle.name }} image"
+                                 src="{{ url_for('static', filename=vehicle.image_file_name) }}">
+                        </th>
+                        <!-- Features -->
+                        <td>
+                            <h3>{{ vehicle.name }}</h3>
+                            <div class="d-flex">
+                                <!-- Number of People -->
+                                <div style="width: 18px; height: 18px; min-width: 18px; min-height: 18px;">
+                                    <svg height="24" style="fill: rgb(191, 191, 191); transform: rotate(0deg); width: 18px; height: 18px; min-width: 18px; min-height: 18px;"
+                                         viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"
+                                         xmlns:xlink="http://www.w3.org/1999/xlink">
+                                        <defs>
+                                            <path d="M17.918 7.718a2.765 2.765 0 011.828 2.596v11.062h-8.832V10.314c0-1.195.764-2.212 1.829-2.596a3.884 3.884 0 005.175 0zm-11.244.257a3.584 3.584 0 003.558.59 3.838 3.838 0 00-.423 1.75v9.805H5v-9.607c0-1.136.69-2.114 1.674-2.538zm2.29-5.271c1.24 0 2.269.91 2.46 2.096 0 .16.013.317.032.472a2.497 2.497 0 01-2.492 2.423 2.499 2.499 0 01-2.496-2.496 2.498 2.498 0 012.496-2.495zM15.33 2c1.544 0 2.8 1.256 2.8 2.8 0 1.545-1.256 2.8-2.8 2.8a2.804 2.804 0 01-2.8-2.8c0-1.544 1.256-2.8 2.8-2.8z"
+                                                  id="pax_svg__a"></path>
+                                        </defs>
+                                        <use fill-rule="evenodd" xlink:href="#pax_svg__a"></use>
+                                    </svg>
+                                </div>
+                                <p class="m-0">
+                                    {{ vehicle.num_people }}&nbsp&nbsp
+                                </p>
+                                <!-- Number of Doors -->
+                                <div style="width: 18px; height: 18px; min-width: 18px; min-height: 18px;">
+                                    <svg height="24" style="fill: rgb(191, 191, 191); transform: rotate(0deg); width: 18px; height: 18px; min-width: 18px; min-height: 18px;"
+                                         viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"
+                                         xmlns:xlink="http://www.w3.org/1999/xlink">
+                                        <defs>
+                                            <path d="M18.897 11.009H5.773c-.5-.198-.567-.496-.36-.86l4.719-4.656c.106-.09.19-.214.375-.187h8.39v5.703zm-.66 3.051h-1.81a.38.38 0 110-.762h1.81a.381.381 0 010 .762zm-7.67-10.056a1.456 1.456 0 00-.11-.004c-.64 0-1.033.373-1.169.502l-.036.03L4.37 9.349l-.09.156c-.23.407-.293.773-.278 1.076L4 10.578v9.3h16.198V4.005h-9.63z"
+                                                  id="doors_svg__a"></path>
+                                        </defs>
+                                        <use fill-rule="evenodd" xlink:href="#doors_svg__a"></use>
+                                    </svg>
+                                </div>
+                                <p class="m-0">
+                                    &nbsp{{ vehicle.num_doors }}&nbsp&nbsp
+                                </p>
+                                <!-- Luggage -->
+                                <div style="width: 18px; height: 18px; min-width: 18px; min-height: 18px;">
+                                    <svg height="24" style="fill: rgb(191, 191, 191); transform: rotate(0deg); width: 18px; height: 18px; min-width: 18px; min-height: 18px;"
+                                         viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"
+                                         xmlns:xlink="http://www.w3.org/1999/xlink">
+                                        <defs>
+                                            <path d="M14 12h-4c-.6 0-1-.4-1-1s.4-1 1-1h4c.6 0 1 .4 1 1s-.4 1-1 1zm-3-5h2V4h-2v3zm4 0V4c.6 0 1-.4 1-1s-.4-1-1-1H9c-.6 0-1 .4-1 1s.4 1 1 1v3c-1.7 0-3 1.3-3 3v8c0 1.3.8 2.4 2 2.8v.8c0 .2.2.4.4.4h1.2c.2 0 .4-.2.4-.4V21h4v.6c0 .2.2.4.4.4h1.2c.2 0 .4-.2.4-.4v-.8c1.2-.4 2-1.5 2-2.8v-8c0-1.7-1.3-3-3-3z"
+                                                  id="luggage_svg__a"></path>
+                                        </defs>
+                                        <use fill-rule="evenodd" xlink:href="#luggage_svg__a"></use>
+                                    </svg>
+                                </div>
+                                <p class="m-0">
+                                    &nbsp{{ vehicle.luggage }}&nbsp&nbsp
+                                </p>
+                                <!-- Gear Type -->
+                                <div style="width: 18px; height: 18px; min-width: 18px; min-height: 18px;">
+                                    <svg height="24" style="fill: rgb(191, 191, 191); transform: rotate(0deg); width: 18px; height: 18px; min-width: 18px; min-height: 18px;"
+                                         viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"
+                                         xmlns:xlink="http://www.w3.org/1999/xlink">
+                                        <defs>
+                                            <path d="M17.875 4a2.125 2.125 0 00-1.063 3.963v3.474h-4.249V7.963a2.133 2.133 0 001.062-1.838 2.125 2.125 0 10-3.188 1.838v3.474h-4.25V7.963A2.122 2.122 0 005.125 4a2.125 2.125 0 00-1.063 3.963v9.073A2.122 2.122 0 005.125 21a2.125 2.125 0 001.063-3.964v-3.474h4.25v3.475A2.122 2.122 0 0011.5 21a2.125 2.125 0 001.063-3.963v-3.474h5.312c.587 0 1.063-.476 1.063-1.063V7.963A2.122 2.122 0 0017.875 4"
+                                                  id="transmission_svg__a"></path>
+                                        </defs>
+                                        <use fill-rule="evenodd" xlink:href="#transmission_svg__a"></use>
+                                    </svg>
+                                </div>
+                                <p class="m-0">
+                                    &nbsp{{ vehicle.gear_type }}&nbsp&nbsp
+                                </p>
+                                <!-- Air Conditioning -->
+                                <div style="width: 18px; height: 18px; min-width: 18px; min-height: 18px;">
+                                    <svg height="24" style="fill: rgb(191, 191, 191); transform: rotate(0deg); width: 18px; height: 18px; min-width: 18px; min-height: 18px;"
+                                         viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"
+                                         xmlns:xlink="http://www.w3.org/1999/xlink">
+                                        <defs>
+                                            <path d="M12.001 3a.774.774 0 00-.782.766v1.431L9.85 3.734a.796.796 0 00-1.107-.047.756.756 0 00-.047 1.083l2.523 2.696v3.207L8.384 9.07 7.26 5.58a.789.789 0 00-.983-.5.765.765 0 00-.51.962l.61 1.894-1.267-.717a.79.79 0 00-1.07.281.756.756 0 00.286 1.047l1.267.716-1.98.43a.766.766 0 00-.595.913.78.78 0 00.933.583l3.65-.791L10.436 12 7.6 13.603l-3.648-.792a.781.781 0 00-.933.582.767.767 0 00.594.915l1.98.43-1.266.715a.757.757 0 00-.286 1.047.786.786 0 001.069.28l1.267-.716-.61 1.895c-.13.403.1.834.51.962a.81.81 0 00.236.035.782.782 0 00.747-.535l1.124-3.491 2.835-1.603v3.204l-2.525 2.7a.756.756 0 00.048 1.082.795.795 0 001.106-.047l1.37-1.465v1.433c0 .423.35.766.783.766a.774.774 0 00.783-.766V18.8l1.37 1.466a.792.792 0 001.105.048.754.754 0 00.05-1.084l-2.525-2.7v-3.203l2.834 1.602 1.122 3.49a.781.781 0 00.981.5.764.764 0 00.512-.96l-.609-1.896 1.267.717c.122.07.256.102.39.102.27 0 .533-.137.678-.383a.756.756 0 00-.286-1.047l-1.266-.716 1.98-.43a.767.767 0 00.594-.914.782.782 0 00-.933-.582l-3.648.791L13.566 12l2.834-1.602 3.648.791a.778.778 0 00.932-.583.767.767 0 00-.595-.913l-1.978-.43 1.267-.716a.757.757 0 00.285-1.047.79.79 0 00-1.068-.28l-1.266.715.609-1.893a.764.764 0 00-.512-.962.787.787 0 00-.981.5l-1.122 3.49-2.835 1.603V7.467l2.524-2.698a.755.755 0 00-.05-1.083.794.794 0 00-1.104.047l-1.37 1.465V3.766A.774.774 0 0012 3"
+                                                  id="air_conditionning_svg__a"></path>
+                                        </defs>
+                                        <use fill-rule="evenodd"
+                                             xlink:href="#air_conditionning_svg__a"></use>
+                                    </svg>
+                                </div>
+                                <p class="m-0">
+                                    &nbsp{{ vehicle.air_conditioning }}
+                                </p>
+                            </div>
+                            <!-- Checkmarks -->
+                            <div class="d-flex mt-3">
+                                <div style="width: 24px; height: 24px; min-width: 24px; min-height: 24px;">
+                                    <svg height="24" style="fill: rgb(0, 153, 0); transform: rotate(0deg); width: 24px; height: 24px; min-width: 24px; min-height: 24px;" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+                                        <defs>
+                                            <path d="M15.52 8.031l1.432 1.203a.134.134 0 01.016.188l-5.84 6.96a.134.134 0 01-.115.048.135.135 0 01-.076-.031l-3.888-3.263a.134.134 0 01-.018-.189l1.203-1.433a.134.134 0 01.189-.016l2.355 1.976 4.553-5.426a.134.134 0 01.188-.017" id="tick_svg__a"></path>
+                                        </defs>
+                                        <use fill-rule="evenodd" xlink:href="#tick_svg__a"></use>
+                                    </svg>
+                                </div>
+                                <p>Collision Damage Protection</p>
+                            </div>
+                            <div class="d-flex">
+                                <div style="width: 24px; height: 24px; min-width: 24px; min-height: 24px;">
+                                    <svg height="24"
+                                         style="fill: rgb(0, 153, 0); transform: rotate(0deg); width: 24px; height: 24px; min-width: 24px; min-height: 24px;"
+                                         viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"
+                                         xmlns:xlink="http://www.w3.org/1999/xlink">
+                                        <defs>
+                                            <path d="M15.52 8.031l1.432 1.203a.134.134 0 01.016.188l-5.84 6.96a.134.134 0 01-.115.048.135.135 0 01-.076-.031l-3.888-3.263a.134.134 0 01-.018-.189l1.203-1.433a.134.134 0 01.189-.016l2.355 1.976 4.553-5.426a.134.134 0 01.188-.017"
+                                                  id="tick_svg__a"></path>
+                                        </defs>
+                                        <use fill-rule="evenodd" xlink:href="#tick_svg__a"></use>
+                                    </svg>
+                                </div>
+                                <p>Theft Protection</p>
+                            </div>
+                            <div class="d-flex">
+                                <div style="width: 24px; height: 24px; min-width: 24px; min-height: 24px;">
+                                    <svg height="24"
+                                         style="fill: rgb(0, 153, 0); transform: rotate(0deg); width: 24px; height: 24px; min-width: 24px; min-height: 24px;"
+                                         viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"
+                                         xmlns:xlink="http://www.w3.org/1999/xlink">
+                                        <defs>
+                                            <path d="M15.52 8.031l1.432 1.203a.134.134 0 01.016.188l-5.84 6.96a.134.134 0 01-.115.048.135.135 0 01-.076-.031l-3.888-3.263a.134.134 0 01-.018-.189l1.203-1.433a.134.134 0 01.189-.016l2.355 1.976 4.553-5.426a.134.134 0 01.188-.017"
+                                                  id="tick_svg__a"></path>
+                                        </defs>
+                                        <use fill-rule="evenodd" xlink:href="#tick_svg__a"></use>
+                                    </svg>
+                                </div>
+                                <p>Full Tank</p>
+                            </div>
+                        </td>
+                        <!-- Price -->
+                        <td class="car-row" data-price-per-day="{{ vehicle.price_per_day }}">
+                            <div class="text-right">
+                                <h6>
+                                    <small class="text-body-secondary">From</small>
+                                </h6>
+                                <h3 class="price-per-day"></h3>
+                                <h5 class="total-price">
+                                    <small class="text-body-secondary">Total: <span></span></small>
+                                </h5>
+                                <a class="btn btn-info mb-4 select-button" data-price-per-day="{{ vehicle.price_per_day }}" href="{{ url_for('check_out', pickup_date=pickup_date, dropoff_date=dropoff_date, vehicle=vehicle.name, id=vehicle.id) }}">
+                                    Select
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+                <!-- Pagination -->
+                <ul class="pagination justify-content-center" style="user-select: none">
+                    {% for page in range(1, total_pages + 1) %}
+                    <li class="page-item {% if page == current_page %}active{% endif %}">
+                        <a class="page-link" href="{{ url_for('economy_class', page=page) }}">{{ page }}</a>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

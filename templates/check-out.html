@@ -1,0 +1,1124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>CodeLab Solutions</title>
+    <!-- website icon -->
+    <link href="{{ url_for('static', filename='icon.ico') }}" rel="icon" type="image/x-icon">
+    <!-- Folha de estilo (main.css) -->
+    <link href="{{ url_for('static', filename='main.css') }}" rel="stylesheet">
+    <!-- Bootstrap JQuery -->
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.min.js"></script>
+    <!-- Bootstrap 4 -->
+    <link crossorigin="anonymous" href="https://cdn.jsdelivr.net/npm/bootswatch@4.5.2/dist/lux/bootstrap.min.css"
+          integrity="sha384-9+PGKSqjRdkeAU7Eu4nkJU8RFaH8ace8HGXnkiKMP9I9Te0GJ4/km3L1Z8tXigpG" rel="stylesheet">
+    <!-- Bootstrap Datepicker -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap-datepicker@1.9.0/dist/js/bootstrap-datepicker.min.js"></script>
+    <!-- Include Bootstrap Datepicker CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-datepicker@1.9.0/dist/css/bootstrap-datepicker.min.css"
+          rel="stylesheet">
+    <!-- Intl Tel Input CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.3/css/intlTelInput.min.css">
+    <!-- Intl Tel Input -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.3/js/intlTelInput.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            if (sessionStorage.getItem("selectedVehicleClass") === "Economy") {
+                $(".border-secondary").removeClass("border-secondary").addClass("border-info");
+                $(".list-group-item-primary").removeClass("list-group-item-primary").addClass("list-group-item-info");
+                $(".btn-primary").removeClass("btn-primary").addClass("btn-info");
+            } else if (sessionStorage.getItem("selectedVehicleClass") === "Gold") {
+                $(".border-secondary").removeClass("border-secondary").addClass("border-warning");
+                $(".list-group-item-primary").removeClass("list-group-item-primary").addClass("list-group-item-warning");
+                $(".btn-primary").removeClass("btn-primary").addClass("btn-warning");
+            }
+
+            // Retrieve the stored Price and update the value in the HTML
+            const pricePerDaySpan = document.getElementById('price-per-day').getElementsByTagName("small")[0];
+            const totalPriceSpan = document.getElementById('total-price').getElementsByTagName("span")[0];
+            pricePerDaySpan.textContent = sessionStorage.getItem("selectedPricePerDay") + "€/ day";
+            totalPriceSpan.textContent = sessionStorage.getItem("selectedTotalPrice") + "€";
+
+            // Handle Phone Number in Driver Details
+            var phoneNumberDriverDetails = document.getElementById("phoneNumberInputDriverDetails");
+
+            var itiDriverDetails = window.intlTelInput(phoneNumberDriverDetails, {
+                separateDialCode: true,
+                preferredCountries: ["pt", "gb", "us"],
+                autoPlaceholder: "aggressive",
+                formatOnDisplay: false,
+                utilsScript: "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.3/js/utils.js"
+            });
+
+            // Handle Phone Number in Billing Information
+            var phoneNumberBillingInformation = document.getElementById("phoneNumberInputBillingInformation");
+
+            var itiBillingInformation = window.intlTelInput(phoneNumberBillingInformation, {
+                separateDialCode: true,
+                preferredCountries: ["pt", "gb", "us"],
+                autoPlaceholder: "aggressive",
+                formatOnDisplay: false,
+                utilsScript: "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.3/js/utils.js"
+            });
+
+            // Handle Country Selection
+            if (!sessionStorage.getItem("countryCodeInputDriverDetails")) {
+                storedCountryCodeDriverDetails = itiDriverDetails.getSelectedCountryData().iso2;
+            }
+
+            // Loop through the options and set the selected attribute for the matching ISO code
+            for (var i = 0; i < document.getElementById("selectCountry").options.length; i++) {
+                if (selectCountry.options[i].value === storedCountryCodeDriverDetails) {
+                    selectCountry.options[i].selected = true;
+                }
+            }
+
+            // Toggle Collapse States
+            toggleCollapseState($("#collapseDriverDetails"), "collapseStateDriverDetails");
+            toggleCollapseState($("#collapsePaymentMethod"), "collapseStatePaymentMethod");
+            toggleCollapseState($("#collapseBillingInformation"), "collapseStateBillingInformation");
+
+            // Add validation for each input field
+            validateField("nameInputDriverDetails", validateNullWithLettersOnly, "Please enter a valid Name.");
+            validateField("emailInputDriverDetails", validateEmail, "Please enter a valid Email Address.");
+            validateField("phoneNumberInputDriverDetails", validateNull, "Please enter a valid Phone Number.");
+            validateField("cardNameInput", validateNullWithLettersOnly, "Please enter a valid Name.");
+            validateField("cardNumberInput", validateCardNumber, "Please enter a valid Card Number.");
+            validateField("selectMonth", validateValidUntil, "Selected month cannot be before today's date.");
+            validateField("selectYear", validateValidUntil, "Selected month cannot be before today's date.");
+            validateField("cvcInput", validateCVC, "Please enter a valid CVC.");
+            validateField("nameInputBillingInformation", validateNullWithLettersOnly, "Please enter a valid Name.");
+            validateField("phoneNumberInputBillingInformation", validateNull, "Please enter a valid Phone Number.");
+            validateField("addressInputBillingInformation", validateNull, "Please enter a valid Address.");
+            validateField("cityInputBillingInformation", validateNullWithLettersOnly, "Please enter a valid City Name.");
+            validateField("postcodeInputBillingInformation", validateNull, "Please enter a valid Postcode.");
+
+            // Update stored input values for each input field
+            setElementValue("nameInputDriverDetails");
+            setElementValue("emailInputDriverDetails");
+            setElementValue("countryCodeInputDriverDetails", itiDriverDetails);
+            setElementValue("phoneNumberInputDriverDetails");
+            setElementValue("cardNameInput");
+            setElementValue("cardNumberInput");
+            setElementValue("selectMonth");
+            setElementValue("selectYear");
+            setElementValue("cvcInput");
+            setElementValue("nameInputBillingInformation");
+            setElementValue("countryCodeInputBillingInformation", itiBillingInformation)
+            setElementValue("selectCountry")
+            setElementValue("phoneNumberInputBillingInformation")
+            setElementValue("addressInputBillingInformation");
+            setElementValue("cityInputBillingInformation");
+            setElementValue("postcodeInputBillingInformation");
+
+            // Edit Button behaviour
+            document.getElementById("editButton").addEventListener("click", function() {
+                const sectionOne = document.getElementById('collapseDriverDetails');
+                const inputElementsOne = sectionOne.querySelectorAll('input');
+                const editButtonLabel = document.getElementById('editButton');
+
+                // if items are not selectable
+                if (inputElementsOne[0].readOnly) {
+                    originalNameValue = document.getElementById('nameInputDriverDetails').value;
+                    originalEmailValue = document.getElementById('emailInputDriverDetails').value;
+                    originalPhoneNumberValue = document.getElementById('phoneNumberInputDriverDetails').value;
+                    originalCountryCode = itiDriverDetails.getSelectedCountryData().iso2;
+
+                    editButtonLabel.textContent = "Save";
+                    discardButton.style.display = "Block";
+                // if items are selectable
+                } else {
+                    // store edits in sessionStorage to stay on page reload
+                    storeElementValue("nameInputDriverDetails");
+                    storeElementValue("emailInputDriverDetails");
+                    storeElementValue("countryCodeInputDriverDetails", itiDriverDetails.getSelectedCountryData().iso2);
+                    storeElementValue("phoneNumberInputDriverDetails");
+
+                    editButtonLabel.textContent = "Edit";
+                    discardButton.style.display = "None";
+                }
+
+                // change state from readOnly to writable and change color accordingly
+                inputElementsOne.forEach(input => {
+                    input.readOnly = !input.readOnly;
+                    // if items are not selectable
+                    if (input.readOnly) {
+                        input.style.backgroundColor = 'transparent';
+                    // if items are selectable
+                    } else {
+                        input.style.backgroundColor = '#fff';
+                    }
+                });
+            });
+
+            // Discard Button behaviour
+            document.getElementById("discardButton").addEventListener("click", function() {
+                const inputElementsOne = document.getElementById('collapseDriverDetails').querySelectorAll('input');
+                const editButtonLabel = document.getElementById('editButton');
+                const discardButtonLabel = document.getElementById('discardButton');
+
+                // change values to original values before editing
+                document.getElementById('nameInputDriverDetails').value = originalNameValue;
+                document.getElementById('emailInputDriverDetails').value = originalEmailValue;
+                itiDriverDetails.setCountry(originalCountryCode);
+                document.getElementById('phoneNumberInputDriverDetails').value = originalPhoneNumberValue;
+
+                // change button's display
+                editButtonLabel.textContent = "Edit";
+                discardButtonLabel.style.display = "None";
+
+                // change back to not selectable and original background color
+                inputElementsOne.forEach(input => {
+                    input.readOnly = !input.readOnly;
+                    input.style.backgroundColor = 'transparent';
+                });
+            });
+
+            // Store input field values in sessionStorage when they change
+            $("input").on("input", function() {
+                const inputId = $(this).attr("id");
+                if (
+                    inputId !== "nameInputDriverDetails" &&
+                    inputId !== "emailInputDriverDetails" &&
+                    inputId !== "phoneNumberInputDriverDetails"
+                ) {
+                    if (inputId !== "phoneNumberInputBillingInformation") {
+                        storeElementValue(inputId);
+                    } else {
+                        storeElementValue("countryCodeInputBillingInformation", itiBillingInformation.getSelectedCountryData().iso2);
+                        storeElementValue(inputId);
+                    }
+                }
+            });
+
+            // Store select element values in sessionStorage when they change
+            $("select").on("change", function () {
+                const selectId = $(this).attr("id");
+                storeElementValue(selectId, $(this).val());
+            });
+
+            // Prevent form submission if any field fails validation
+            $("#paymentForm").submit(function (event) {
+                // Perform your validation checks here
+                if (!validateAllFields()) {
+                    event.preventDefault(); // Prevent form submission
+                }
+            });
+        });
+
+        // Store collapse state of each accordion item
+        function toggleCollapseState(collapseElement, sessionStorageKey) {
+            // Check if sessionStorageKey is not set and the collapsible element doesn't have the class "show"
+            if (!sessionStorage.getItem(sessionStorageKey) && !collapseElement.hasClass("show")) {
+                sessionStorage.setItem(sessionStorageKey, "collapsed");
+            }
+
+            const isCollapsed = sessionStorage.getItem(sessionStorageKey) === "collapsed";
+
+            if (isCollapsed) {
+                collapseElement.removeClass("show");
+            } else {
+                collapseElement.addClass("show");
+            }
+
+            collapseElement.on("shown.bs.collapse", () => {
+                sessionStorage.setItem(sessionStorageKey, "expanded");
+            });
+
+            collapseElement.on("hidden.bs.collapse", () => {
+                sessionStorage.setItem(sessionStorageKey, "collapsed");
+            });
+        }
+
+        // Store input field values in sessionStorage
+        function storeElementValue(inputId, value = 0) {
+            const inputElement = $("#" + inputId);
+            if (value === 0) {
+                const elementValue = inputElement.val();
+                sessionStorage.setItem(inputId, elementValue);
+            // If we're setting Country Code
+            } else {
+                sessionStorage.setItem(inputId, value);
+            }
+        }
+
+        // Retrieve and set input field values from sessionStorage if they exist
+        function setElementValue(inputId, value = 0) {
+            const elementValue = sessionStorage.getItem(inputId);
+            if (elementValue) {
+                if (value === 0) {
+                    $("#" + inputId).val(elementValue);
+                } else {
+                    value.setCountry(sessionStorage.getItem(inputId));
+                }
+            }
+        }
+
+        // Format the Card Number as user types
+        function formatCardNumber(input) {
+            const value = input.value.replace(/\D/g, ''); // Remove non-numeric characters
+            let formattedValue = '';
+
+            for (let i = 0; i < value.length; i++) {
+                if (i % 4 === 0 && i !== 0) {
+                    formattedValue += ' ';
+                }
+                formattedValue += value[i];
+            }
+            input.value = formattedValue.slice(0, 23); // Limit the value to 19 numbers, 23 characters
+        }
+
+        // Format the CVC as user types
+        function formatCVC(input) {
+            const value = input.value.replace(/\D/g, ''); // Remove non-numeric characters
+            input.value = value.slice(0, 3); // Limit the value to 3 numbers
+        }
+
+        // Validate Input Fields
+        function validateField(inputId, validationFunction, customErrorMessage) {
+            const inputElement = $("#" + inputId);
+
+            if (inputId !== "selectYear" && inputId !== "selectMonth") {
+                inputElement.blur(function () {
+                    const inputValue = inputElement.val();
+
+                    if (!validationFunction(inputValue)) {
+                        inputElement
+                            .removeClass("border-secondary")
+                            .addClass("card border-danger is-invalid")
+                            .attr("title", customErrorMessage);
+                    } else {
+                        inputElement
+                            .removeClass("card border-danger is-invalid")
+                            .addClass("border-secondary")
+                            .removeAttr("title");
+                    }
+                });
+            } else {
+                inputElement.on("change", function () {
+                    const selectedMonth = parseInt($("#selectMonth").val(), 10);
+                    const selectedYear = parseInt($("#selectYear").val(), 10);
+
+                    if (!validateValidUntil(selectedMonth, selectedYear)) {
+                        $("#selectMonth")
+                            .removeClass("border-secondary")
+                            .addClass("card border-danger is-invalid")
+                            .attr("title", customErrorMessage);
+                    } else {
+                        $("#selectMonth")
+                            .removeClass("card border-danger is-invalid")
+                            .addClass("border-secondary")
+                            .removeAttr("title");
+                    }
+                });
+            }
+        }
+
+        // Validate All Input Fields
+        function validateAllFields() {
+            // Store input elements and their respective error messages
+            const invalidInputs = {};
+
+            // Check all the fields and add input elements that fail validation to the invalidInputs object
+            if (!validateNullWithLettersOnly($("#nameInputDriverDetails").val())) {
+                invalidInputs["nameInputDriverDetails"] = "Please enter a valid Name.";
+            }
+            if (!validateEmail($("#emailInputDriverDetails").val())) {
+                invalidInputs["emailInputDriverDetails"] = "Please enter a valid Email Address.";
+            }
+            if (!validateNull($("#phoneNumberInputDriverDetails").val())) {
+                invalidInputs["phoneNumberInputDriverDetails"] = "Please enter a valid Phone Number.";
+            }
+            if (!validateNullWithLettersOnly($("#cardNameInput").val())) {
+                invalidInputs["cardNameInput"] = "Please enter a valid Name.";
+            }
+            if (!validateCardNumber($("#cardNumberInput").val())) {
+                invalidInputs["cardNumberInput"] = "Please enter a valid Card Number.";
+            }
+
+            if (!validateValidUntil(parseInt($("#selectMonth").val(), 10), parseInt($("#selectYear").val(), 10))) {
+                invalidInputs["selectMonth"] = "Selected month cannot be before today's date.";
+            }
+
+            if (!validateCVC($("#cvcInput").val())) {
+                invalidInputs["cvcInput"] = "Please enter a valid CVC.";
+            }
+            if (!validateNullWithLettersOnly($("#nameInputBillingInformation").val())) {
+                invalidInputs["nameInputBillingInformation"] = "Please enter a valid Name.";
+            }
+            if (!validateNull($("#phoneNumberInputBillingInformation").val())) {
+                invalidInputs["phoneNumberInputBillingInformation"] = "Please enter a valid Phone Number.";
+            }
+            if (!validateNull($("#addressInputBillingInformation").val())) {
+                invalidInputs["addressInputBillingInformation"] = "Please enter a valid Address.";
+            }
+            if (!validateNullWithLettersOnly($("#cityInputBillingInformation").val())) {
+                invalidInputs["cityInputBillingInformation"] = "Please enter a valid City Name.";
+            }
+            if (!validateNull($("#postcodeInputBillingInformation").val())) {
+                invalidInputs["postcodeInputBillingInformation"] = "Please enter a valid Postcode.";
+            }
+
+            // Iterate through invalidInputs and update their properties
+            for (const inputId in invalidInputs) {
+                const errorMessage = invalidInputs[inputId];
+                $("#" + inputId)
+                    .removeClass("border-secondary")
+                    .addClass("card border-danger is-invalid")
+                    .attr("title", errorMessage);
+            }
+
+            // Return true if there are no invalid inputs, otherwise return false
+            return Object.keys(invalidInputs).length === 0;
+        }
+
+        // Define validation functions for each field
+        function validateNull(value) {
+            return value !== "";
+        }
+
+        function validateNullWithLettersOnly(value) {
+            // Use a regular expression to check if the value contains only letters (with spaces allowed)
+            return value !== "" && /^[A-Za-z\s]*$/.test(value);
+        }
+
+        function validateEmail(email) {
+            // Use a regular expression to check if the email address is valid
+            return /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/.test(email);
+        }
+
+        function validateCardNumber(cardNumber) {
+            // Check if the card number is not empty and has a length between 19 and 23 characters
+            return cardNumber.length >= 19 && cardNumber.length <= 23;
+        }
+
+        function validateCVC(cvc) {
+            return cvc.length === 3;
+        }
+
+        // Check if the selected month and year are before today's date
+        function validateValidUntil(selectedMonth, selectedYear) {
+            const currentDate = new Date();
+            const currentYear = currentDate.getFullYear();
+            const currentMonth = currentDate.getMonth() + 1; // Month is 0-based, so add 1 to get the correct month
+
+            return ((selectedMonth >= currentMonth) || (selectedYear > currentYear));
+        }
+
+        // Submit the logout form and redirect to the login page with a success message
+        function logoutAndRedirect() {
+            // Clear stored dates from local storage
+            sessionStorage.clear();
+
+            // Submit the logout form
+            document.getElementById("logout-form").submit();
+        }
+    </script>
+    <style>
+        .sticky-right-fieldset {
+            position: sticky;
+            top: 100px;
+            height: 100%;
+        }
+    </style>
+</head>
+<body style="overflow: auto; height: 100vh">
+<!-- Header -->
+<nav class="navbar navbar-expand-lg navbar-dark fixed-top bg-primary" style="padding-top: 0; padding-bottom: 0;">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="/main-page" type="submit">CodeLab Solutions</a>
+        <button aria-controls="navbarColor01" aria-expanded="false" aria-label="Toggle navigation"
+                class="navbar-toggler collapsed" data-target="#navbarColor01" data-toggle="collapse" type="button">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="navbar-collapse collapse" id="navbarColor01" style="">
+            <ul class="navbar-nav mr-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="/main-page">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/economy-class">Economy</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/silver-class">Silver</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/gold-class">Gold</a>
+                </li>
+            </ul>
+            <ul class="navbar-nav">
+                <li class="nav-item dropdown">
+                    <a aria-expanded="false" aria-haspopup="true" class="nav-link dropdown-toggle" data-toggle="dropdown"
+                       href="#" role="button">
+                        <img alt="Profile" src="/static/profile.png" style="max-height: 65px;">
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-right">
+                        <form action="/logout" id="logout-form" method="POST">
+                            <a class="dropdown-item" href="#Logout" onclick="logoutAndRedirect()">Logout</a>
+                        </form>
+                    </div>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+<!-- Body -->
+<div class="pb-4 px-4" style="padding-top: 125px">
+    <div class="card border-secondary mx-auto" style="min-width: 1000px; max-width: 1500px; width: 100%;">
+        <div class="card card-header">
+            <div class="d-flex justify-content-between">
+                <!-- Left Fieldset -->
+                <fieldset class="flex-fill mr-3">
+                    <form method="POST" name="paymentForm" id="paymentForm">
+                        <!-- Driver Details -->
+                        <div class="panel-group" id="accordionDriverDetails">
+                            <!-- Header -->
+                            <div class="panel panel-default">
+                                <div class="panel-heading" id="headingDriverDetails">
+                                    <h4 class="panel-title list-group-item-primary card-body">
+                                        <a aria-controls="collapseDriverDetails" aria-expanded="true" class="accordion-toggle"
+                                           data-parent="#accordionDriverDetails" data-toggle="collapse" href="#collapseDriverDetails">
+                                            Driver Details
+                                        </a>
+                                    </h4>
+                                </div>
+                            </div>
+                            <!-- Collapse Driver Details -->
+                            <div aria-labelledby="headingDriverDetails" class="panel-collapse collapse show" id="collapseDriverDetails">
+                                <div class="panel-body">
+                                    <!-- Name -->
+                                    <div class="form-group row px-3">
+                                        <label class="col-sm-2 col-form-label text-center" for="nameInputDriverDetails" style="min-width: 122px; max-width: 122px">
+                                            Name
+                                        </label>
+                                        <div class="col d-flex align-items-center">
+                                            <input class="form-control border-secondary" id="nameInputDriverDetails" readonly=""
+                                                   style="padding-left: 10px;" type="text" value="{{ user.name }} {{ user.surname }}" name="nameDriverDetails">
+                                        </div>
+                                    </div>
+                                    <!-- Email -->
+                                    <div class="form-group row px-3">
+                                        <label class="col-sm-2 col-form-label text-center" for="emailInputDriverDetails" style="min-width: 122px; max-width: 122px">
+                                            Email
+                                        </label>
+                                        <div class="col d-flex align-items-center">
+                                            <input class="form-control border-secondary" id="emailInputDriverDetails" readonly=""
+                                                   style="padding-left: 10px;" type="email" value="{{ user.email }}" name="emailDriverDetails">
+                                        </div>
+                                    </div>
+                                    <!-- Phone Number // Edit Button -->
+                                    <div class="form-group row px-3">
+                                        <!-- Phone Number -->
+                                        <label class="col-sm-2 col-form-label text-center " for="phoneNumberInputDriverDetails"
+                                               style="min-width: 122px; max-width: 122px; padding-top: 0px; padding-bottom: 0px;">
+                                            Phone Number
+                                        </label>
+                                         <div class="col d-flex align-items-center">
+                                            <input style="background-color: transparent;" type="text" id="phoneNumberInputDriverDetails" readonly
+                                                   class="form-control border-secondary" onkeypress="return /[0-9]/i.test(event.key)" maxlength="12"
+                                                   value="{{ user.phone_number_prefix }}{{ user.phone_number }}" name="phoneNumberDriverDetails">
+                                        </div>
+                                        <!-- Edit // Discard Button -->
+                                        <div class="d-flex align-items-center justify-content-end pr-3">
+                                            <a class="text-danger pr-1 mb-0" id="discardButton" href="#" style="display: none">
+                                                Discard
+                                            </a>
+                                            <a class="btn btn-primary ml-2" id="editButton" type="button" style="width: 127px">
+                                                Edit
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Payment Method -->
+                        <div class="panel-group" id="accordionPaymentMethod">
+                            <!-- Header -->
+                            <div class="panel panel-default">
+                                <div class="panel-heading" id="headingPaymentMethod">
+                                    <h4 class="panel-title list-group-item-primary card-body">
+                                        <a aria-controls="collapseDriverDetails" aria-expanded="true" class="accordion-toggle"
+                                           data-parent="#accordionPaymentMethod" data-toggle="collapse" href="#collapsePaymentMethod">
+                                            Payment Method
+                                        </a>
+                                    </h4>
+                                </div>
+                            </div>
+                            <!-- Collapse Payment Method -->
+                            <div aria-labelledby="headingPaymentMethod" class="panel-collapse collapse" id="collapsePaymentMethod">
+                                <div class="panel-body">
+                                    <!-- Cardholder's Name -->
+                                    <div class="form-group row px-3">
+                                        <label class="col-sm-2 col-form-label text-center" for="cardNameInput"
+                                               style="min-width: 122px; max-width: 122px; padding-top: 0px; padding-bottom: 0px;">
+                                            Cardholder's Name
+                                        </label>
+                                        <div class="col d-flex align-items-center">
+                                            <input class="form-control border-secondary" id="cardNameInput"
+                                                   style="padding-left: 10px; background-color: #fff;" type="text" name="cardName"
+                                                   placeholder="example: {{ user.name }} {{ user.surname }}">
+                                        </div>
+                                    </div>
+                                    <!-- Card Number -->
+                                    <div class="form-group row px-3">
+                                        <label class="col-sm-2 col-form-label text-center" for="cardNumberInput"
+                                               style="min-width: 122px; max-width: 122px; padding-top: 0px; padding-bottom: 0px;">
+                                            Card Number
+                                        </label>
+                                        <div class="col d-flex align-items-center">
+                                            <input class="form-control border-secondary" id="cardNumberInput" name="cardNumber"
+                                                   minlength="19" maxlength="23" inputmode="numeric" type="text"
+                                                   style="padding-left: 10px; background-color: #fff;"
+                                                   oninput="formatCardNumber(this)" placeholder="example: 4200 0000 0000 0000">
+                                        </div>
+                                    </div>
+                                    <!-- Valid Until // CVC -->
+                                    <div class="form-group row px-3">
+                                        <!-- Valid Until -->
+                                        <label class="col-sm-2 col-form-label text-center" for="selectMonth" style="min-width: 122px; max-width: 122px">
+                                            Valid Until
+                                        </label>
+                                        <div class="d-flex align-items-center" style="padding-left: 15px">
+                                            <!-- Month -->
+                                            <div class="text-left">
+                                                <select class="custom-select border-secondary" style="background-color: #fff" id="selectMonth">
+                                                    <script>
+                                                        const selectMonthElement = document.getElementById("selectMonth");
+                                                        const currentMonth = new Date().getMonth() + 1; // JavaScript months are 0-based
+
+                                                        for (let i = 1; i <= 12; i++) {
+                                                            let option = document.createElement("option");
+                                                            option.value = i.toString().padStart(2, "0");
+                                                            option.text = i.toString().padStart(2, "0");
+
+                                                            if (i === currentMonth) {
+                                                                option.selected = true;
+                                                            }
+                                                            selectMonthElement.appendChild(option);
+                                                        }
+                                                    </script>
+                                                </select>
+                                            </div>
+                                            <!-- Year -->
+                                            <div class="text-left pl-2">
+                                                <select class="custom-select border-secondary" style="background-color: #fff" id="selectYear">
+                                                    <script>
+                                                        const selectYearElement = document.getElementById("selectYear");
+                                                        const currentYear = new Date().getFullYear();
+
+                                                        for (let i = 0; i <= 16; i++) {
+                                                            let option = document.createElement("option");
+                                                            option.value = currentYear + i;
+                                                            option.text = (currentYear + i).toString();
+                                                            if (i === 0) {
+                                                                option.selected = true; // Set the current year as selected
+                                                            }
+                                                            selectYearElement.appendChild(option);
+                                                        }
+                                                    </script>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <!-- CVC -->
+                                        <label class="col-form-label text-right" style="padding-left: 40px" for="cvcInput">
+                                            CVC
+                                        </label>
+                                        <div class="col d-flex align-items-center">
+                                            <input type="text" style="width: 90px; padding-left: 10px; background-color: #fff;"
+                                                   minlength="3" maxlength="3" id="cvcInput" name="CVC" oninput="formatCVC(this)"
+                                                   class="form-control border-secondary">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Billing Information -->
+                        <div class="panel-group" id="accordionBillingInformation">
+                            <!-- Header -->
+                            <div class="panel panel-default">
+                                <div class="panel-heading" id="headingBillingInformation">
+                                    <h4 class="panel-title list-group-item-primary card-body">
+                                        <a aria-controls="collapseBillingInformation" aria-expanded="true" class="accordion-toggle"
+                                           data-parent="#accordionBillingInformation" data-toggle="collapse" href="#collapseBillingInformation">
+                                            Billing Information
+                                        </a>
+                                    </h4>
+                                </div>
+                            </div>
+                            <!-- Collapse Billing Information -->
+                            <div aria-labelledby="headingBillingInformation" class="panel-collapse collapse" id="collapseBillingInformation">
+                                <div class="panel-body">
+                                    <!-- Name -->
+                                    <div class="form-group row px-3">
+                                        <label class="col-sm-2 col-form-label text-center" for="nameInputBillingInformation" style="min-width: 122px; max-width: 122px">
+                                            Name
+                                        </label>
+                                        <div class="col d-flex align-items-center">
+                                            <input class="form-control border-secondary" id="nameInputBillingInformation"
+                                                   style="padding-left: 10px; background-color: #fff;" type="text" name="nameBillingInformation"
+                                                   placeholder="example: {{ user.name }} {{ user.surname }}">
+                                        </div>
+                                    </div>
+                                    <!-- Phone Number -->
+                                    <div class="form-group row px-3">
+                                        <label class="col-sm-2 col-form-label text-center" for="phoneNumberInputBillingInformation"
+                                               style="min-width: 122px; max-width: 122px; padding-top: 0px; padding-bottom: 0px;">
+                                            Phone Number
+                                        </label>
+                                         <div class="col d-flex align-items-center">
+                                            <input style="background-color: #fff;" type="text" id="phoneNumberInputBillingInformation" name="phoneNumberBillingInformation" maxlength="12"
+                                                   class="form-control border-secondary" onkeypress="return /[0-9]/i.test(event.key)">
+                                        </div>
+                                    </div>
+                                    <!-- Country -->
+                                    <div class="form-group row px-3">
+                                        <label class="col-sm-2 col-form-label text-center" for="selectCountry" style="min-width: 122px; max-width: 122px">
+                                            Country
+                                        </label>
+                                        <div class="d-flex align-items-center" style="padding-left: 15px">
+                                            <select class="custom-select border-secondary" style="background-color: #fff; width: 262px" id="selectCountry">
+                                                <option value="af">Afghanistan</option>
+                                                <option value="ax">Åland Islands</option>
+                                                <option value="al">Albania</option>
+                                                <option value="dz">Algeria</option>
+                                                <option value="as">American Samoa</option>
+                                                <option value="ad">Andorra</option>
+                                                <option value="ao">Angola</option>
+                                                <option value="ai">Anguilla</option>
+                                                <option value="aq">Antarctica</option>
+                                                <option value="ag">Antigua and Barbuda</option>
+                                                <option value="ar">Argentina</option>
+                                                <option value="am">Armenia</option>
+                                                <option value="aw">Aruba</option>
+                                                <option value="au">Australia</option>
+                                                <option value="at">Austria</option>
+                                                <option value="az">Azerbaijan</option>
+                                                <option value="bs">Bahamas</option>
+                                                <option value="bh">Bahrain</option>
+                                                <option value="bd">Bangladesh</option>
+                                                <option value="bb">Barbados</option>
+                                                <option value="by">Belarus</option>
+                                                <option value="be">Belgium</option>
+                                                <option value="bz">Belize</option>
+                                                <option value="bj">Benin</option>
+                                                <option value="bm">Bermuda</option>
+                                                <option value="bt">Bhutan</option>
+                                                <option value="bo">Bolivia</option>
+                                                <option value="ba">Bosnia and Herzegovina</option>
+                                                <option value="bw">Botswana</option>
+                                                <option value="bv">Bouvet Island</option>
+                                                <option value="br">Brazil</option>
+                                                <option value="io">British Indian Ocean Territory</option>
+                                                <option value="bn">Brunei Darussalam</option>
+                                                <option value="bg">Bulgaria</option>
+                                                <option value="bf">Burkina Faso</option>
+                                                <option value="bi">Burundi</option>
+                                                <option value="kh">Cambodia</option>
+                                                <option value="cm">Cameroon</option>
+                                                <option value="ca">Canada</option>
+                                                <option value="cv">Cape Verde</option>
+                                                <option value="ky">Cayman Islands</option>
+                                                <option value="cf">Central African Republic</option>
+                                                <option value="td">Chad</option>
+                                                <option value="cl">Chile</option>
+                                                <option value="cn">China</option>
+                                                <option value="cx">Christmas Island</option>
+                                                <option value="cc">Cocos (Keeling) Islands</option>
+                                                <option value="co">Colombia</option>
+                                                <option value="km">Comoros</option>
+                                                <option value="cg">Congo</option>
+                                                <option value="cd">Congo, The Democratic Republic of The</option>
+                                                <option value="ck">Cook Islands</option>
+                                                <option value="cr">Costa Rica</option>
+                                                <option value="ci">Cote D'ivoire</option>
+                                                <option value="hr">Croatia</option>
+                                                <option value="cu">Cuba</option>
+                                                <option value="cy">Cyprus</option>
+                                                <option value="cz">Czechia</option>
+                                                <option value="dk">Denmark</option>
+                                                <option value="dj">Djibouti</option>
+                                                <option value="dm">Dominica</option>
+                                                <option value="do">Dominican Republic</option>
+                                                <option value="ec">Ecuador</option>
+                                                <option value="eg">Egypt</option>
+                                                <option value="sv">El Salvador</option>
+                                                <option value="gq">Equatorial Guinea</option>
+                                                <option value="er">Eritrea</option>
+                                                <option value="ee">Estonia</option>
+                                                <option value="et">Ethiopia</option>
+                                                <option value="fk">Falkland Islands (Malvinas)</option>
+                                                <option value="fo">Faroe Islands</option>
+                                                <option value="fj">Fiji</option>
+                                                <option value="fi">Finland</option>
+                                                <option value="fr">France</option>
+                                                <option value="gf">French Guiana</option>
+                                                <option value="pf">French Polynesia</option>
+                                                <option value="tf">French Southern Territories</option>
+                                                <option value="ga">Gabon</option>
+                                                <option value="gm">Gambia</option>
+                                                <option value="ge">Georgia</option>
+                                                <option value="de">Germany</option>
+                                                <option value="gh">Ghana</option>
+                                                <option value="gi">Gibraltar</option>
+                                                <option value="gr">Greece</option>
+                                                <option value="gl">Greenland</option>
+                                                <option value="gd">Grenada</option>
+                                                <option value="gp">Guadeloupe</option>
+                                                <option value="gu">Guam</option>
+                                                <option value="gt">Guatemala</option>
+                                                <option value="gg">Guernsey</option>
+                                                <option value="gn">Guinea</option>
+                                                <option value="gw">Guinea-bissau</option>
+                                                <option value="gy">Guyana</option>
+                                                <option value="ht">Haiti</option>
+                                                <option value="hm">Heard Island and Mcdonald Islands</option>
+                                                <option value="va">Holy See (Vatican City State)</option>
+                                                <option value="hn">Honduras</option>
+                                                <option value="hk">Hong Kong</option>
+                                                <option value="hu">Hungary</option>
+                                                <option value="is">Iceland</option>
+                                                <option value="in">India</option>
+                                                <option value="id">Indonesia</option>
+                                                <option value="ir">Iran, Islamic Republic of</option>
+                                                <option value="iq">Iraq</option>
+                                                <option value="ie">Ireland</option>
+                                                <option value="im">Isle of Man</option>
+                                                <option value="il">Israel</option>
+                                                <option value="it">Italy</option>
+                                                <option value="jm">Jamaica</option>
+                                                <option value="jp">Japan</option>
+                                                <option value="je">Jersey</option>
+                                                <option value="jo">Jordan</option>
+                                                <option value="kz">Kazakhstan</option>
+                                                <option value="ke">Kenya</option>
+                                                <option value="ki">Kiribati</option>
+                                                <option value="kp">Korea, Democratic People's Republic of</option>
+                                                <option value="kr">Korea, Republic of</option>
+                                                <option value="kw">Kuwait</option>
+                                                <option value="kg">Kyrgyzstan</option>
+                                                <option value="la">Lao People's Democratic Republic</option>
+                                                <option value="lv">Latvia</option>
+                                                <option value="lb">Lebanon</option>
+                                                <option value="ls">Lesotho</option>
+                                                <option value="lr">Liberia</option>
+                                                <option value="ly">Libyan Arab Jamahiriya</option>
+                                                <option value="li">Liechtenstein</option>
+                                                <option value="lt">Lithuania</option>
+                                                <option value="lu">Luxembourg</option>
+                                                <option value="mo">Macao</option>
+                                                <option value="mk">Macedonia, The Former Yugoslav Republic of</option>
+                                                <option value="mg">Madagascar</option>
+                                                <option value="mw">Malawi</option>
+                                                <option value="my">Malaysia</option>
+                                                <option value="mv">Maldives</option>
+                                                <option value="ml">Mali</option>
+                                                <option value="mt">Malta</option>
+                                                <option value="mh">Marshall Islands</option>
+                                                <option value="mq">Martinique</option>
+                                                <option value="mr">Mauritania</option>
+                                                <option value="mu">Mauritius</option>
+                                                <option value="yt">Mayotte</option>
+                                                <option value="mx">Mexico</option>
+                                                <option value="fm">Micronesia, Federated States of</option>
+                                                <option value="md">Moldova, Republic of</option>
+                                                <option value="mc">Monaco</option>
+                                                <option value="mn">Mongolia</option>
+                                                <option value="me">Montenegro</option>
+                                                <option value="ms">Montserrat</option>
+                                                <option value="ma">Morocco</option>
+                                                <option value="mz">Mozambique</option>
+                                                <option value="mm">Myanmar</option>
+                                                <option value="na">Namibia</option>
+                                                <option value="nr">Nauru</option>
+                                                <option value="np">Nepal</option>
+                                                <option value="nl">Netherlands</option>
+                                                <option value="an">Netherlands Antilles</option>
+                                                <option value="nc">New Caledonia</option>
+                                                <option value="nz">New Zealand</option>
+                                                <option value="ni">Nicaragua</option>
+                                                <option value="ne">Niger</option>
+                                                <option value="ng">Nigeria</option>
+                                                <option value="nu">Niue</option>
+                                                <option value="nf">Norfolk Island</option>
+                                                <option value="mp">Northern Mariana Islands</option>
+                                                <option value="no">Norway</option>
+                                                <option value="om">Oman</option>
+                                                <option value="pk">Pakistan</option>
+                                                <option value="pw">Palau</option>
+                                                <option value="ps">Palestinian Territory, Occupied</option>
+                                                <option value="pa">Panama</option>
+                                                <option value="pg">Papua New Guinea</option>
+                                                <option value="py">Paraguay</option>
+                                                <option value="pe">Peru</option>
+                                                <option value="ph">Philippines</option>
+                                                <option value="pn">Pitcairn</option>
+                                                <option value="pl">Poland</option>
+                                                <option value="pt">Portugal</option>
+                                                <option value="pr">Puerto Rico</option>
+                                                <option value="qa">Qatar</option>
+                                                <option value="re">Reunion</option>
+                                                <option value="ro">Romania</option>
+                                                <option value="ru">Russian Federation</option>
+                                                <option value="rw">Rwanda</option>
+                                                <option value="sh">Saint Helena</option>
+                                                <option value="kn">Saint Kitts and Nevis</option>
+                                                <option value="lc">Saint Lucia</option>
+                                                <option value="pm">Saint Pierre and Miquelon</option>
+                                                <option value="vc">Saint Vincent and The Grenadines</option>
+                                                <option value="ws">Samoa</option>
+                                                <option value="sm">San Marino</option>
+                                                <option value="st">Sao Tome and Principe</option>
+                                                <option value="sa">Saudi Arabia</option>
+                                                <option value="sn">Senegal</option>
+                                                <option value="rs">Serbia</option>
+                                                <option value="sc">Seychelles</option>
+                                                <option value="sl">Sierra Leone</option>
+                                                <option value="sg">Singapore</option>
+                                                <option value="sk">Slovakia</option>
+                                                <option value="si">Slovenia</option>
+                                                <option value="sb">Solomon Islands</option>
+                                                <option value="so">Somalia</option>
+                                                <option value="za">South Africa</option>
+                                                <option value="gs">South Georgia and The South Sandwich Islands</option>
+                                                <option value="es">Spain</option>
+                                                <option value="lk">Sri Lanka</option>
+                                                <option value="sd">Sudan</option>
+                                                <option value="sr">Suriname</option>
+                                                <option value="sj">Svalbard and Jan Mayen</option>
+                                                <option value="sz">Swaziland</option>
+                                                <option value="se">Sweden</option>
+                                                <option value="ch">Switzerland</option>
+                                                <option value="sy">Syrian Arab Republic</option>
+                                                <option value="tw">Taiwan, Province of China</option>
+                                                <option value="tj">Tajikistan</option>
+                                                <option value="tz">Tanzania, United Republic of</option>
+                                                <option value="th">Thailand</option>
+                                                <option value="tl">Timor-leste</option>
+                                                <option value="tg">Togo</option>
+                                                <option value="tk">Tokelau</option>
+                                                <option value="to">Tonga</option>
+                                                <option value="tt">Trinidad and Tobago</option>
+                                                <option value="tn">Tunisia</option>
+                                                <option value="tr">Turkey</option>
+                                                <option value="tm">Turkmenistan</option>
+                                                <option value="tc">Turks and Caicos Islands</option>
+                                                <option value="tv">Tuvalu</option>
+                                                <option value="ug">Uganda</option>
+                                                <option value="ua">Ukraine</option>
+                                                <option value="ae">United Arab Emirates</option>
+                                                <option value="gb">United Kingdom</option>
+                                                <option value="us">United States</option>
+                                                <option value="um">United States Minor Outlying Islands</option>
+                                                <option value="uy">Uruguay</option>
+                                                <option value="uz">Uzbekistan</option>
+                                                <option value="vu">Vanuatu</option>
+                                                <option value="ve">Venezuela</option>
+                                                <option value="vn">Viet Nam</option>
+                                                <option value="vg">Virgin Islands, British</option>
+                                                <option value="vi">Virgin Islands, U.S.</option>
+                                                <option value="wf">Wallis and Futuna</option>
+                                                <option value="eh">Western Sahara</option>
+                                                <option value="ye">Yemen</option>
+                                                <option value="zm">Zambia</option>
+                                                <option value="zw">Zimbabwe</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <!-- Address -->
+                                    <div class="form-group row px-3">
+                                        <label class="col-sm-2 col-form-label text-center" for="addressInputBillingInformation" style="min-width: 122px; max-width: 122px">
+                                            Address
+                                        </label>
+                                        <div class="col d-flex align-items-center">
+                                            <input class="form-control border-secondary" id="addressInputBillingInformation"
+                                                   style="padding-left: 10px; background-color: #fff;" type="text" name="addressBillingInformation"
+                                                   placeholder="House/Apartment number and street name">
+                                        </div>
+                                    </div>
+                                    <!-- City // Postcode -->
+                                    <div class="form-group row px-3">
+                                        <!-- City -->
+                                        <label class="col-sm-2 col-form-label text-center" for="cityInputBillingInformation" style="min-width: 122px; max-width: 122px">
+                                            City
+                                        </label>
+                                        <div class="col d-flex align-items-center">
+                                            <input class="form-control border-secondary" id="cityInputBillingInformation" style="padding-left: 10px; background-color: #fff;" type="text" name="cityBillingInformation">
+                                        </div>
+                                        <!-- Postcode -->
+                                        <label class="col-sm-2 col-form-label text-center" for="postcodeInputBillingInformation" style="min-width: 122px; max-width: 122px">
+                                            Postcode
+                                        </label>
+                                        <div class="col d-flex align-items-center" style="padding-left: 0px">
+                                            <input class="form-control border-secondary" id="postcodeInputBillingInformation" style="padding-left: 10px; background-color: #fff;" type="text" name="postcodeBillingInformation">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Book Now Button -->
+                        <div class="d-flex justify-content-end" style="padding-right: 16px; padding-top: 10px;">
+                            <button id="bookNowButton" class="btn btn-primary" type="submit" style="width: 127px">
+                                Book Now
+                            </button>
+                        </div>
+                    </form>
+                </fieldset>
+                <!-- Right fieldset -->
+                <fieldset class="col-4 sticky-right-fieldset" style="max-width: 400px;">
+                    <div class="card border-secondary">
+                        <!-- Header -->
+                        <div class="card-header border-secondary text-center">Your Booking Summary</div>
+                        <!-- Body -->
+                        <div class="card-body">
+                            <!-- Vehicle Name -->
+                            <h4 class="text-center" id="vehicle_name">{{ vehicle.name }}</h4>
+                            <!-- Image -->
+                            <img alt="{{ vehicle.name }} image" src="{{ url_for('static', filename=vehicle.image_file_name) }}">
+                            <!-- Features -->
+                            <div class="d-flex justify-content-center mt-3">
+                                <!-- Number of People -->
+                                <div style="width: 18px; height: 18px; min-width: 18px; min-height: 18px;">
+                                    <svg height="24" style="fill: rgb(191, 191, 191); transform: rotate(0deg); width: 18px; height: 18px; min-width: 18px; min-height: 18px;"
+                                         viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"
+                                         xmlns:xlink="http://www.w3.org/1999/xlink">
+                                        <defs>
+                                            <path d="M17.918 7.718a2.765 2.765 0 011.828 2.596v11.062h-8.832V10.314c0-1.195.764-2.212 1.829-2.596a3.884 3.884 0 005.175 0zm-11.244.257a3.584 3.584 0 003.558.59 3.838 3.838 0 00-.423 1.75v9.805H5v-9.607c0-1.136.69-2.114 1.674-2.538zm2.29-5.271c1.24 0 2.269.91 2.46 2.096 0 .16.013.317.032.472a2.497 2.497 0 01-2.492 2.423 2.499 2.499 0 01-2.496-2.496 2.498 2.498 0 012.496-2.495zM15.33 2c1.544 0 2.8 1.256 2.8 2.8 0 1.545-1.256 2.8-2.8 2.8a2.804 2.804 0 01-2.8-2.8c0-1.544 1.256-2.8 2.8-2.8z"
+                                                  id="pax_svg__a"></path>
+                                        </defs>
+                                        <use fill-rule="evenodd" xlink:href="#pax_svg__a"></use>
+                                    </svg>
+                                </div>
+                                <p class="m-0">
+                                    {{ vehicle.num_people }}&nbsp&nbsp
+                                </p>
+                                <!-- Number of Doors -->
+                                <div style="width: 18px; height: 18px; min-width: 18px; min-height: 18px;">
+                                    <svg height="24" style="fill: rgb(191, 191, 191); transform: rotate(0deg); width: 18px; height: 18px; min-width: 18px; min-height: 18px;"
+                                         viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"
+                                         xmlns:xlink="http://www.w3.org/1999/xlink">
+                                        <defs>
+                                            <path d="M18.897 11.009H5.773c-.5-.198-.567-.496-.36-.86l4.719-4.656c.106-.09.19-.214.375-.187h8.39v5.703zm-.66 3.051h-1.81a.38.38 0 110-.762h1.81a.381.381 0 010 .762zm-7.67-10.056a1.456 1.456 0 00-.11-.004c-.64 0-1.033.373-1.169.502l-.036.03L4.37 9.349l-.09.156c-.23.407-.293.773-.278 1.076L4 10.578v9.3h16.198V4.005h-9.63z"
+                                                  id="doors_svg__a"></path>
+                                        </defs>
+                                        <use fill-rule="evenodd" xlink:href="#doors_svg__a"></use>
+                                    </svg>
+                                </div>
+                                <p class="m-0">
+                                    &nbsp{{ vehicle.num_doors }}&nbsp&nbsp
+                                </p>
+                                <!-- Luggage -->
+                                <div style="width: 18px; height: 18px; min-width: 18px; min-height: 18px;">
+                                    <svg height="24" style="fill: rgb(191, 191, 191); transform: rotate(0deg); width: 18px; height: 18px; min-width: 18px; min-height: 18px;"
+                                         viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"
+                                         xmlns:xlink="http://www.w3.org/1999/xlink">
+                                        <defs>
+                                            <path d="M14 12h-4c-.6 0-1-.4-1-1s.4-1 1-1h4c.6 0 1 .4 1 1s-.4 1-1 1zm-3-5h2V4h-2v3zm4 0V4c.6 0 1-.4 1-1s-.4-1-1-1H9c-.6 0-1 .4-1 1s.4 1 1 1v3c-1.7 0-3 1.3-3 3v8c0 1.3.8 2.4 2 2.8v.8c0 .2.2.4.4.4h1.2c.2 0 .4-.2.4-.4V21h4v.6c0 .2.2.4.4.4h1.2c.2 0 .4-.2.4-.4v-.8c1.2-.4 2-1.5 2-2.8v-8c0-1.7-1.3-3-3-3z"
+                                                  id="luggage_svg__a"></path>
+                                        </defs>
+                                        <use fill-rule="evenodd" xlink:href="#luggage_svg__a"></use>
+                                    </svg>
+                                </div>
+                                <p class="m-0">
+                                    &nbsp{{ vehicle.luggage }}&nbsp&nbsp
+                                </p>
+                                <!-- Gear Type -->
+                                <div style="width: 18px; height: 18px; min-width: 18px; min-height: 18px;">
+                                    <svg height="24" style="fill: rgb(191, 191, 191); transform: rotate(0deg); width: 18px; height: 18px; min-width: 18px; min-height: 18px;"
+                                         viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"
+                                         xmlns:xlink="http://www.w3.org/1999/xlink">
+                                        <defs>
+                                            <path d="M17.875 4a2.125 2.125 0 00-1.063 3.963v3.474h-4.249V7.963a2.133 2.133 0 001.062-1.838 2.125 2.125 0 10-3.188 1.838v3.474h-4.25V7.963A2.122 2.122 0 005.125 4a2.125 2.125 0 00-1.063 3.963v9.073A2.122 2.122 0 005.125 21a2.125 2.125 0 001.063-3.964v-3.474h4.25v3.475A2.122 2.122 0 0011.5 21a2.125 2.125 0 001.063-3.963v-3.474h5.312c.587 0 1.063-.476 1.063-1.063V7.963A2.122 2.122 0 0017.875 4"
+                                                  id="transmission_svg__a"></path>
+                                        </defs>
+                                        <use fill-rule="evenodd" xlink:href="#transmission_svg__a"></use>
+                                    </svg>
+                                </div>
+                                <p class="m-0">
+                                    &nbsp{{ vehicle.gear_type }}&nbsp&nbsp
+                                </p>
+                                <!-- Air Conditioning -->
+                                <div style="width: 18px; height: 18px; min-width: 18px; min-height: 18px;">
+                                    <svg height="24" style="fill: rgb(191, 191, 191); transform: rotate(0deg); width: 18px; height: 18px; min-width: 18px; min-height: 18px;"
+                                         viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"
+                                         xmlns:xlink="http://www.w3.org/1999/xlink">
+                                        <defs>
+                                            <path d="M12.001 3a.774.774 0 00-.782.766v1.431L9.85 3.734a.796.796 0 00-1.107-.047.756.756 0 00-.047 1.083l2.523 2.696v3.207L8.384 9.07 7.26 5.58a.789.789 0 00-.983-.5.765.765 0 00-.51.962l.61 1.894-1.267-.717a.79.79 0 00-1.07.281.756.756 0 00.286 1.047l1.267.716-1.98.43a.766.766 0 00-.595.913.78.78 0 00.933.583l3.65-.791L10.436 12 7.6 13.603l-3.648-.792a.781.781 0 00-.933.582.767.767 0 00.594.915l1.98.43-1.266.715a.757.757 0 00-.286 1.047.786.786 0 001.069.28l1.267-.716-.61 1.895c-.13.403.1.834.51.962a.81.81 0 00.236.035.782.782 0 00.747-.535l1.124-3.491 2.835-1.603v3.204l-2.525 2.7a.756.756 0 00.048 1.082.795.795 0 001.106-.047l1.37-1.465v1.433c0 .423.35.766.783.766a.774.774 0 00.783-.766V18.8l1.37 1.466a.792.792 0 001.105.048.754.754 0 00.05-1.084l-2.525-2.7v-3.203l2.834 1.602 1.122 3.49a.781.781 0 00.981.5.764.764 0 00.512-.96l-.609-1.896 1.267.717c.122.07.256.102.39.102.27 0 .533-.137.678-.383a.756.756 0 00-.286-1.047l-1.266-.716 1.98-.43a.767.767 0 00.594-.914.782.782 0 00-.933-.582l-3.648.791L13.566 12l2.834-1.602 3.648.791a.778.778 0 00.932-.583.767.767 0 00-.595-.913l-1.978-.43 1.267-.716a.757.757 0 00.285-1.047.79.79 0 00-1.068-.28l-1.266.715.609-1.893a.764.764 0 00-.512-.962.787.787 0 00-.981.5l-1.122 3.49-2.835 1.603V7.467l2.524-2.698a.755.755 0 00-.05-1.083.794.794 0 00-1.104.047l-1.37 1.465V3.766A.774.774 0 0012 3"
+                                                  id="air_conditionning_svg__a"></path>
+                                        </defs>
+                                        <use fill-rule="evenodd"
+                                             xlink:href="#air_conditionning_svg__a"></use>
+                                    </svg>
+                                </div>
+                                <p class="m-0">
+                                    &nbsp{{ vehicle.air_conditioning }}
+                                </p>
+                            </div>
+                            <!-- Checkmarks -->
+                            <div class="d-flex justify-content-center mt-3">
+                                <div style="width: 24px; height: 24px; min-width: 24px; min-height: 24px;">
+                                    <svg height="24" style="fill: rgb(0, 153, 0); transform: rotate(0deg); width: 24px; height: 24px; min-width: 24px; min-height: 24px;" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+                                        <defs>
+                                            <path d="M15.52 8.031l1.432 1.203a.134.134 0 01.016.188l-5.84 6.96a.134.134 0 01-.115.048.135.135 0 01-.076-.031l-3.888-3.263a.134.134 0 01-.018-.189l1.203-1.433a.134.134 0 01.189-.016l2.355 1.976 4.553-5.426a.134.134 0 01.188-.017" id="tick_svg__a"></path>
+                                        </defs>
+                                        <use fill-rule="evenodd" xlink:href="#tick_svg__a"></use>
+                                    </svg>
+                                </div>
+                                <p>Collision Damage Protection</p>
+                            </div>
+                            <div class="d-flex justify-content-center">
+                                <div style="width: 24px; height: 24px; min-width: 24px; min-height: 24px;">
+                                    <svg height="24"
+                                         style="fill: rgb(0, 153, 0); transform: rotate(0deg); width: 24px; height: 24px; min-width: 24px; min-height: 24px;"
+                                         viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"
+                                         xmlns:xlink="http://www.w3.org/1999/xlink">
+                                        <defs>
+                                            <path d="M15.52 8.031l1.432 1.203a.134.134 0 01.016.188l-5.84 6.96a.134.134 0 01-.115.048.135.135 0 01-.076-.031l-3.888-3.263a.134.134 0 01-.018-.189l1.203-1.433a.134.134 0 01.189-.016l2.355 1.976 4.553-5.426a.134.134 0 01.188-.017"
+                                                  id="tick_svg__a"></path>
+                                        </defs>
+                                        <use fill-rule="evenodd" xlink:href="#tick_svg__a"></use>
+                                    </svg>
+                                </div>
+                                <p>Theft Protection</p>
+                            </div>
+                            <div class="d-flex justify-content-center" style="height: 24px;">
+                                <div style="width: 24px; height: 24px; min-width: 24px; min-height: 24px;">
+                                    <svg height="24"
+                                         style="fill: rgb(0, 153, 0); transform: rotate(0deg); width: 24px; height: 24px; min-width: 24px; min-height: 24px;"
+                                         viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"
+                                         xmlns:xlink="http://www.w3.org/1999/xlink">
+                                        <defs>
+                                            <path d="M15.52 8.031l1.432 1.203a.134.134 0 01.016.188l-5.84 6.96a.134.134 0 01-.115.048.135.135 0 01-.076-.031l-3.888-3.263a.134.134 0 01-.018-.189l1.203-1.433a.134.134 0 01.189-.016l2.355 1.976 4.553-5.426a.134.134 0 01.188-.017"
+                                                  id="tick_svg__a"></path>
+                                        </defs>
+                                        <use fill-rule="evenodd" xlink:href="#tick_svg__a"></use>
+                                    </svg>
+                                </div>
+                                <p>Full Tank</p>
+                            </div>
+                            <hr class="border-secondary">
+                            <div class="text-body-secondary">
+                                <div class="d-flex justify-content-center">
+                                    <p>Renting from:&nbsp;</p>
+                                    <h5>{{ pickup_date }}</h5>
+                                </div>
+                                <div class="d-flex justify-content-center">
+                                    <p>Until:&nbsp;</p>
+                                    <h5>{{ dropoff_date }}</h5>
+                                </div>
+                            </div>
+                            <hr class="border-secondary">
+                            <h4 class="text-center" id="total-price">Total: <span>226,31</span></h4>
+                            <h6 class="text-center" id="price-per-day">
+                                <small></small>
+                            </h6>
+                        </div>
+                    </div>
+                </fieldset>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>
