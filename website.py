@@ -1,13 +1,13 @@
-import re, phonenumbers
+import phonenumbers
+import re
 from datetime import date, datetime
+from math import ceil
+
 from flask import render_template, request, redirect, session, url_for
 from sqlalchemy.exc import IntegrityError
-from math import ceil
-from sqlalchemy import text
-from flask_sqlalchemy import SQLAlchemy
 
-from main import app, db, bcrypt
 from databases import Vehicle, User, RentedVehicle, CompanyBalance
+from main import app, db, bcrypt
 
 pickup_date_str = ""
 dropoff_date_str = ""
@@ -24,8 +24,6 @@ def login():
         password = request.form.get('password')
         button_clicked = request.form.get('button_clicked')  # Check if the button was clicked
 
-        # Verifica se houve algum click no botão desta pagina, caso não tenha havido nenhum clique não dá trigger em
-        # error messages
         if button_clicked:  # Check if the button was clicked
             if not username_or_email or not password:
                 session['error'] = "Both username/email and password are required"
@@ -35,7 +33,7 @@ def login():
                 (User.username == username_or_email) | (User.email == username_or_email)
             ).first()
 
-            # Verifica se o username/email e a password ("decrypted") coincidem
+            # Checks if the username/email and the password ("decrypted") are valid
             if user and user.check_password(password):
                 session['user_id'] = user.id  # Store the user ID in the session
                 session.pop('error', None)  # Clear the error message from session
