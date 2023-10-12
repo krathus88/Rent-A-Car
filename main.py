@@ -23,6 +23,9 @@ app.config['SECRET_KEY'] = secrets.token_hex(32)
 db = SQLAlchemy(app)
 bcrypt = Bcrypt(app)
 
+from website import *
+
+
 # Function to run the Flask website
 def run_flask():
     app.run(debug=True)

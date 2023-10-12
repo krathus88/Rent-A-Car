@@ -2,10 +2,8 @@ import phonenumbers
 import re
 from datetime import date, datetime
 from math import ceil
-
 from flask import render_template, request, redirect, session, url_for
 from sqlalchemy.exc import IntegrityError
-
 from databases import Vehicle, User, RentedVehicle, CompanyBalance
 from main import app, db, bcrypt
 
