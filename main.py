@@ -1,25 +1,14 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
-import secrets
 import threading
-import os 
 from tkinter import *
+from config import Config
 from app import Product
 
 app = Flask(__name__)
-# Define the path to the 'instance' directory
-instance_path = os.path.join(app.root_path, 'instance')
-# Create the 'instance' directory if it doesn't exist
-os.makedirs(instance_path, exist_ok=True)
-# Configure SQLite database URIs
-app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{os.path.join(instance_path, "logins.db")}'
-app.config['SQLALCHEMY_BINDS'] = {
-    'vehicle': f'sqlite:///{os.path.join(instance_path, "vehicles.db")}',
-    'balance': f'sqlite:///{os.path.join(instance_path, "company_balance.db")}',
-    'rented': f'sqlite:///{os.path.join(instance_path, "rented_vehicles.db")}'
-}
-app.config['SECRET_KEY'] = secrets.token_hex(32)
+app.config.from_object(Config)
+
 db = SQLAlchemy(app)
 bcrypt = Bcrypt(app)
 
@@ -43,9 +32,10 @@ if __name__ == '__main__':
     tkinter_thread = threading.Thread(target=run_tkinter)
     tkinter_thread.start()
 
+    # Create all the tables defined in the models within the Flask application context
     with app.app_context():
-        db.create_all()
-        db.session.commit()
+        db.create_all()  # Create the database tables
+        db.session.commit()  # Commit the changes to the database
 
     # Start the Flask app using Gunicorn
     app.run(host='127.0.0.1', port=5000)  # No need for debug=True

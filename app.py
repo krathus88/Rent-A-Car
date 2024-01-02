@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import sqlite3
 import re
 
-# these are global variables used to store the respective radio button values
+# Global variables to store radio button values
 vehicle_class_value = "0"
 gear_type_value = "0"
 air_conditioning_value = "0"
@@ -14,14 +14,22 @@ vehicle_type_value = "0"
 
 
 class Product:
+    # Define a static method to perform database queries
     @staticmethod
-    def db_query(query, parameters=(), fetchone=False, db='instance/vehicles.db'):
-        with sqlite3.connect(db) as con:  # Iniciamos uma conexão com a base de dados (alias con)
-            cursor = con.cursor()  # Criamos um cursor da conexão para poder operar na base de dados
-            result = cursor.execute(query, parameters)  # Preparar a consulta SQL (com parâmetros se os há)
-            con.commit()  # Executar a consulta SQL preparada anteriormente
+    def db_query(query, parameters=(), fetchone=False, db='instance/rent_a_car.db', commit=True):
+        # Connect to the SQLite database
+        with sqlite3.connect(db) as con:
+            # Create a cursor for operating on the database
+            cursor = con.cursor()
+            # Execute the provided SQL query with optional parameters
+            result = cursor.execute(query, parameters)
+            # Commit changes to the database if specified
+            if commit:
+                con.commit()
+            # If fetchone is True, return the result of fetchone()
             if fetchone:
                 return result.fetchone()
+            # Return the result of the query execution
             return result
 
     def __init__(self, root):
@@ -140,7 +148,7 @@ class Product:
         self.table.delete(*self.table.get_children())
 
         # Fetch data from the database and insert into the table
-        query = "SELECT id, name, image_file_name, vehicle_type, num_people, num_doors, luggage, gear_type, air_conditioning, price_per_day, vehicle_class, next_check_up, next_ved, vehicle_available_again, vehicle_status, last_check_up, last_ved FROM vehicle"
+        query = "SELECT * FROM vehicle"
         result = self.db_query(query)
 
         # Create a tag color for check-up
@@ -267,41 +275,51 @@ class Product:
         self.populate_table()
 
     def update_error_label(self):
-        # Get the number of vehicles from vehicles.db
+        # Get the number of vehicles from vehicle
         num_vehicles_query = "SELECT COUNT(*) FROM vehicle WHERE vehicle_status = 'ready';"
         num_vehicles = self.db_query(num_vehicles_query, fetchone=True)[0]
 
-        # Get the number of registered users from logins.db
+        # Get the number of registered users from user
         num_clients_query = "SELECT COUNT(*) FROM user"
-        num_clients = self.db_query(num_clients_query, fetchone=True, db='instance/logins.db')[0]
+        num_clients = self.db_query(num_clients_query, fetchone=True)[0]
 
-        if num_vehicles < num_clients + 5:
-            cars_needed = num_clients + 5 - num_vehicles
-            self.error_label.config(text=f"You have {num_clients} clients so you need to buy {cars_needed} more cars.\nNeed to always have 5 more cars available than the number of clients.", fg="red")
+        if not num_vehicles:
+            self.error_label.config(text="Welcome! Start by registering 5 vehicles.")
         else:
-            self.error_label.config(text="")
+            if num_vehicles < num_clients + 5:
+                vehicles_needed = num_clients + 5 - num_vehicles
+                self.error_label.config(text=f"You have {num_clients} clients so you need to buy {vehicles_needed} more vehicles.\nNeed to always have 5 more vehicles available than the number of clients.", fg="red")
+            else:
+                self.error_label.config(text="")
 
     def calculate_balance(self):
         # Fetch the balance from the database
-        query = "SELECT * FROM balance WHERE id = (SELECT MAX(id) FROM balance)"
-        result = self.db_query(query, fetchone=True, db='instance/company_balance.db')
+        query = "SELECT * FROM balance ORDER BY id DESC LIMIT 1;"
+        result = self.db_query(query, fetchone=True)
 
-        if self.transaction_cost_car:
-            balance = result[1] + self.transaction_cost_car
-            transaction_date = date.today()
-            query = "INSERT INTO balance ('balance', 'transaction_cost', 'transaction_date') VALUES (?, ?, ?)"
-            parameters = (balance, self.transaction_cost_car, transaction_date)
-            self.db_query(query, parameters, db='instance/company_balance.db')
-            self.transaction_cost_car = None
-        elif self.transaction_cost_motorbike:
-            balance = result[1] + self.transaction_cost_motorbike
-            transaction_date = date.today()
-            query = "INSERT INTO balance ('balance', 'transaction_cost', 'transaction_date') VALUES (?, ?, ?)"
-            parameters = (balance, self.transaction_cost_motorbike, transaction_date)
-            self.db_query(query, parameters, db='instance/company_balance.db')
-            self.transaction_cost_motorbike = None
+        # If there's no entry in the database
+        if not result:
+            balance = 10000
+            query = "INSERT INTO balance ('balance') VALUES (?)"
+            self.db_query(query, balance)
+        # If there are entries in the database
         else:
-            balance = result[1]
+            if self.transaction_cost_car:
+                balance = result[1] + self.transaction_cost_car
+                transaction_date = date.today()
+                query = "INSERT INTO balance ('balance', 'transaction_cost', 'transaction_date') VALUES (?, ?, ?)"
+                parameters = (balance, self.transaction_cost_car, transaction_date)
+                self.db_query(query, parameters)
+                self.transaction_cost_car = None
+            elif self.transaction_cost_motorbike:
+                balance = result[1] + self.transaction_cost_motorbike
+                transaction_date = date.today()
+                query = "INSERT INTO balance ('balance', 'transaction_cost', 'transaction_date') VALUES (?, ?, ?)"
+                parameters = (balance, self.transaction_cost_motorbike, transaction_date)
+                self.db_query(query, parameters)
+                self.transaction_cost_motorbike = None
+            else:
+                balance = result[1]
 
         balance = round(balance, 2) # Round the balance to 2 decimal places before returning it
         self.balance_label.config(text=f"Current balance: {balance}")
@@ -698,7 +716,7 @@ class Product:
                 GROUP BY month_year
                 ORDER BY month_year
                 """
-        result = self.db_query(query, (twelve_months_ago, next_month_first_day), db='instance/company_balance.db')
+        result = self.db_query(query, (twelve_months_ago, next_month_first_day))
 
         # Process the data to create a dictionary of values
         data_dict = {}

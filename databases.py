@@ -1,4 +1,5 @@
 from main import db, bcrypt
+from sqlalchemy.orm import relationship
 
 
 class User(db.Model):
@@ -26,7 +27,6 @@ class User(db.Model):
 
 
 class Vehicle(db.Model):
-    __bind_key__ = 'vehicle'  # Specify the bind for this model
     __tablename__ = 'vehicle'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
@@ -65,8 +65,27 @@ class Vehicle(db.Model):
         self.vehicle_status = vehicle_status
 
 
+class Bookings(db.Model):
+    __tablename__ = 'booking'
+    id = db.Column(db.Integer, primary_key=True)
+    vehicle_id = db.Column(db.Integer, db.ForeignKey('vehicle.id'), nullable=False)  # column "vehicle_id" is the same as column "id" from Vehicle
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)  # column "user_id" is the same as column "id" from User
+    rent_from_date = db.Column(db.String, nullable=False)
+    rent_until_date = db.Column(db.String, nullable=False)
+    rental_status = db.Column(db.String, nullable=False)
+
+    # Define the relationship with the Vehicle table
+    vehicle_relation = relationship('Vehicle', backref='rentals', lazy=True)
+    # Define the relationship with the User table
+    user_relation = relationship('User', backref='rentals', lazy=True)
+
+    def __init__(self, rent_from_date, rent_until_date, rental_status):
+        self.rent_from_date = rent_from_date
+        self.rent_until_date = rent_until_date
+        self.rental_status = rental_status
+
+
 class CompanyBalance(db.Model):
-    __bind_key__ = 'balance'  # Specify the bind for this model
     __tablename__ = 'balance'
     id = db.Column(db.Integer, primary_key=True)
     balance = db.Column(db.Float, nullable=False)
@@ -77,19 +96,3 @@ class CompanyBalance(db.Model):
         self.balance = balance
         self.transaction_cost = transaction_cost
         self.transaction_date = transaction_date
-
-
-class RentedVehicle(db.Model):
-    __bind_key__ = 'rented'  # Specify the bind for this model
-    __tablename__ = 'rented'
-    id = db.Column(db.Integer, primary_key=True)
-    vehicle_name = db.Column(db.String, nullable=False)
-    rent_from_date = db.Column(db.String, nullable=False)
-    rent_until_date = db.Column(db.String, nullable=False)
-    rental_status = db.Column(db.String, nullable=False)
-
-    def __init__(self, vehicle_name, rent_from_date, rent_until_date, rental_status):
-        self.vehicle_name = vehicle_name
-        self.rent_from_date = rent_from_date
-        self.rent_until_date = rent_until_date
-        self.rental_status = rental_status

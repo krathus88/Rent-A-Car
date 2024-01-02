@@ -4,7 +4,7 @@ from datetime import date, datetime
 from math import ceil
 from flask import render_template, request, redirect, session, url_for
 from sqlalchemy.exc import IntegrityError
-from databases import Vehicle, User, RentedVehicle, CompanyBalance
+from databases import Vehicle, User, Bookings, CompanyBalance
 from main import app, db, bcrypt
 
 pickup_date_str = ""
@@ -214,8 +214,8 @@ def economy_class():
         # Query Vehicle database to get only the vehicles with vehicle_class = "Economy" and vehicle_status = "ready"
         economy_vehicles = Vehicle.query.filter_by(vehicle_class="Economy", vehicle_status="ready").all()
 
-        # Query RentedVehicle database to get only the vehicles with rental_status = "rented"
-        rented_vehicles = RentedVehicle.query.filter_by(rental_status="rented").all()
+        # Query Bookings table to get only the vehicles with rental_status = "rented"
+        rented_vehicles = Bookings.query.filter_by(rental_status="rented").all()
 
         # Filter out the vehicles that are already rented for the selected dates
         for vehicle in economy_vehicles:
@@ -283,8 +283,8 @@ def silver_class():
         # Query Vehicle database to get only the vehicles with vehicle_class = "Silver" and vehicle_status = "ready"
         silver_vehicles = Vehicle.query.filter_by(vehicle_class="Silver", vehicle_status="ready").all()
 
-        # Query RentedVehicle database to get only the vehicles with rental_status = "rented"
-        rented_vehicles = RentedVehicle.query.filter_by(rental_status="rented").all()
+        # Query Bookings database to get only the vehicles with rental_status = "rented"
+        rented_vehicles = Bookings.query.filter_by(rental_status="rented").all()
 
         # Filter out the vehicles that are already rented for the selected dates
         for vehicle in silver_vehicles:
@@ -354,8 +354,8 @@ def gold_class():
         # Query Vehicle database to get only the vehicles with vehicle_class = "Gold" and vehicle_status = "ready"
         gold_vehicles = Vehicle.query.filter_by(vehicle_class="Gold", vehicle_status="ready").all()
 
-        # Query RentedVehicle database to get only the vehicles with rental_status = "rented"
-        rented_vehicles = RentedVehicle.query.filter_by(rental_status="rented").all()
+        # Query Bookings database to get only the vehicles with rental_status = "rented"
+        rented_vehicles = Bookings.query.filter_by(rental_status="rented").all()
 
         # Filter out the vehicles that are already rented for the selected dates
         for vehicle in gold_vehicles:
@@ -423,9 +423,8 @@ def check_out():
 
             # When the user clicks the "Book Now" button, it triggers this if-clause
             if request.method == 'POST':
-                # Create a new RentedVehicle entry in the database
-                rented_vehicle = RentedVehicle(
-                    vehicle_name=selected_vehicle.name,
+                # Create a new Bookings entry in the database
+                rented_vehicle = Bookings(
                     rent_from_date=pickup_date_str,
                     rent_until_date=dropoff_date_str,
                     rental_status="rented"
