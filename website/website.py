@@ -4,7 +4,7 @@ from datetime import date, datetime
 from math import ceil
 from flask import render_template, request, redirect, session, url_for
 from sqlalchemy.exc import IntegrityError
-from databases import Vehicle, User, Bookings, CompanyBalance
+from common.databases import Vehicle, User, Bookings, CompanyBalance
 from main import app, db, bcrypt
 
 pickup_date_str = ""

@@ -37,7 +37,7 @@ class Product:
         self.window.title("Vehicle Management")
         self.window.geometry("1000x400")
         self.window.resizable(FALSE, FALSE)
-        self.window.wm_iconbitmap('static/icon.ico')
+        self.window.wm_iconbitmap('website/static/images/icon.ico')
 
         self.edit_check = FALSE
 
@@ -296,7 +296,6 @@ class Product:
         # Fetch the balance from the database
         query = "SELECT * FROM balance ORDER BY id DESC LIMIT 1;"
         result = self.db_query(query, fetchone=True)
-
         # If there's no entry in the database
         if not result:
             balance = 10000
@@ -358,7 +357,7 @@ class Product:
         self.popup.title("Vehicle Registration")  # Title of the pop-up window
         self.popup.geometry("800x380")  # Set the size of the pop-up window
         self.popup.resizable(FALSE, FALSE)
-        self.popup.wm_iconbitmap('static/icon.ico')
+        self.window.wm_iconbitmap('website/static/images/icon.ico')
 
         # Grab the user's attention and disable interaction with the main window
         self.popup.grab_set()
@@ -522,7 +521,7 @@ class Product:
         self.popup.title("Vehicle Editing")
         self.popup.geometry("550x535")
         self.popup.resizable(FALSE, FALSE)
-        self.popup.wm_iconbitmap('static/icon.ico')
+        self.window.wm_iconbitmap('website/static/images/icon.ico')
 
         # Grab the user's attention and disable interaction with the main window
         self.popup.grab_set()
@@ -743,7 +742,7 @@ class Product:
         colors = ['green' if value >= 0 else 'red' for value in values]
 
         plt.figure(num='Company Revenue Statistics')
-        self.window.iconbitmap(default='static/icon.ico')
+        self.window.iconbitmap('website/static/images/icon.ico')
         plt.bar(labels, values, color=colors)
         plt.ylabel('Company Revenue')
         plt.title('Company Revenue for each month of the previous 12 months.')

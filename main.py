@@ -4,15 +4,18 @@ from flask_bcrypt import Bcrypt
 import threading
 from tkinter import *
 from config import Config
-from app import Product
+from app.app import Product
 
-app = Flask(__name__)
+app = Flask(__name__,
+            static_url_path="",
+            template_folder="website/templates",
+            static_folder="website/static")
 app.config.from_object(Config)
 
 db = SQLAlchemy(app)
 bcrypt = Bcrypt(app)
 
-from website import *
+from website.website import *
 
 
 # Function to run the Flask website
@@ -38,7 +41,7 @@ if __name__ == '__main__':
         db.session.commit()  # Commit the changes to the database
 
     # Start the Flask app using Gunicorn
-    app.run(host='127.0.0.1', port=5000)  # No need for debug=True
+    app.run(host='127.0.0.1', port=5000, threaded=True)
 
     # Wait for the Tkinter thread to finish
     tkinter_thread.join()

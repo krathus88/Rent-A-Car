@@ -1,0 +1,64 @@
+/* Styles for screens with a width of 992px or more */
+@media (min-width: 992px) {
+    header {
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+    }
+    main {
+        padding-top: 88px;
+    }
+}
+
+/* Styles for screens with a width less than 992px */
+@media (max-width: 991px) {
+    header {
+        height: 88px !important;
+    }
+    main {
+        padding-top: 85px !important;
+    }
+}
+
+body {
+    background: #ECE9E6;  /* fallback for old browsers */
+    background: -webkit-linear-gradient(to right, #FFFFFF, #ECE9E6);  /* Chrome 10-25, Safari 5.1-6 */
+    background: linear-gradient(to right, #FFFFFF, #ECE9E6); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+}
+
+header {
+    height: 88px !important;
+}
+
+footer {
+    background-color: #212529;
+    color: white;
+}
+
+.text-control {
+    padding-top: 2rem;
+}
+
+.card img {
+    max-width: 100%;
+    height: auto;
+}
+
+.card-hover-effect {
+    transition: transform 0.4s; /* Adding a smooth transition effect */
+}
+
+.card-hover-effect:hover {
+    transform: scale(1.04); /* Scaling the card to 104% on hover */
+}
+
+.card-economy {
+    background-color: #c0e2ff;
+}
+
+.card-silver {
+    background-color: #04040421;
+}
+
+.card-gold {
+    background-color: #ffd9a8;
+}

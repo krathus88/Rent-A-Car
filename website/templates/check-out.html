@@ -7,7 +7,7 @@
     <link href="{{ url_for('static', filename='icon.ico') }}" rel="icon" type="image/x-icon">
     <!-- Folha de estilo (main.css) -->
     <link href="{{ url_for('static', filename='main.css') }}" rel="stylesheet">
-    <!-- Bootstrap JQuery -->
+    <!-- JQuery -->
     <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.min.js"></script>
@@ -23,399 +23,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.3/css/intlTelInput.min.css">
     <!-- Intl Tel Input -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.3/js/intlTelInput.min.js"></script>
-    <script>
-        $(document).ready(function() {
-            if (sessionStorage.getItem("selectedVehicleClass") === "Economy") {
-                $(".border-secondary").removeClass("border-secondary").addClass("border-info");
-                $(".list-group-item-primary").removeClass("list-group-item-primary").addClass("list-group-item-info");
-                $(".btn-primary").removeClass("btn-primary").addClass("btn-info");
-            } else if (sessionStorage.getItem("selectedVehicleClass") === "Gold") {
-                $(".border-secondary").removeClass("border-secondary").addClass("border-warning");
-                $(".list-group-item-primary").removeClass("list-group-item-primary").addClass("list-group-item-warning");
-                $(".btn-primary").removeClass("btn-primary").addClass("btn-warning");
-            }
-
-            // Retrieve the stored Price and update the value in the HTML
-            const pricePerDaySpan = document.getElementById('price-per-day').getElementsByTagName("small")[0];
-            const totalPriceSpan = document.getElementById('total-price').getElementsByTagName("span")[0];
-            pricePerDaySpan.textContent = sessionStorage.getItem("selectedPricePerDay") + "€/ day";
-            totalPriceSpan.textContent = sessionStorage.getItem("selectedTotalPrice") + "€";
-
-            // Handle Phone Number in Driver Details
-            var phoneNumberDriverDetails = document.getElementById("phoneNumberInputDriverDetails");
-
-            var itiDriverDetails = window.intlTelInput(phoneNumberDriverDetails, {
-                separateDialCode: true,
-                preferredCountries: ["pt", "gb", "us"],
-                autoPlaceholder: "aggressive",
-                formatOnDisplay: false,
-                utilsScript: "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.3/js/utils.js"
-            });
-
-            // Handle Phone Number in Billing Information
-            var phoneNumberBillingInformation = document.getElementById("phoneNumberInputBillingInformation");
-
-            var itiBillingInformation = window.intlTelInput(phoneNumberBillingInformation, {
-                separateDialCode: true,
-                preferredCountries: ["pt", "gb", "us"],
-                autoPlaceholder: "aggressive",
-                formatOnDisplay: false,
-                utilsScript: "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.3/js/utils.js"
-            });
-
-            // Handle Country Selection
-            if (!sessionStorage.getItem("countryCodeInputDriverDetails")) {
-                storedCountryCodeDriverDetails = itiDriverDetails.getSelectedCountryData().iso2;
-            }
-
-            // Loop through the options and set the selected attribute for the matching ISO code
-            for (var i = 0; i < document.getElementById("selectCountry").options.length; i++) {
-                if (selectCountry.options[i].value === storedCountryCodeDriverDetails) {
-                    selectCountry.options[i].selected = true;
-                }
-            }
-
-            // Toggle Collapse States
-            toggleCollapseState($("#collapseDriverDetails"), "collapseStateDriverDetails");
-            toggleCollapseState($("#collapsePaymentMethod"), "collapseStatePaymentMethod");
-            toggleCollapseState($("#collapseBillingInformation"), "collapseStateBillingInformation");
-
-            // Add validation for each input field
-            validateField("nameInputDriverDetails", validateNullWithLettersOnly, "Please enter a valid Name.");
-            validateField("emailInputDriverDetails", validateEmail, "Please enter a valid Email Address.");
-            validateField("phoneNumberInputDriverDetails", validateNull, "Please enter a valid Phone Number.");
-            validateField("cardNameInput", validateNullWithLettersOnly, "Please enter a valid Name.");
-            validateField("cardNumberInput", validateCardNumber, "Please enter a valid Card Number.");
-            validateField("selectMonth", validateValidUntil, "Selected month cannot be before today's date.");
-            validateField("selectYear", validateValidUntil, "Selected month cannot be before today's date.");
-            validateField("cvcInput", validateCVC, "Please enter a valid CVC.");
-            validateField("nameInputBillingInformation", validateNullWithLettersOnly, "Please enter a valid Name.");
-            validateField("phoneNumberInputBillingInformation", validateNull, "Please enter a valid Phone Number.");
-            validateField("addressInputBillingInformation", validateNull, "Please enter a valid Address.");
-            validateField("cityInputBillingInformation", validateNullWithLettersOnly, "Please enter a valid City Name.");
-            validateField("postcodeInputBillingInformation", validateNull, "Please enter a valid Postcode.");
-
-            // Update stored input values for each input field
-            setElementValue("nameInputDriverDetails");
-            setElementValue("emailInputDriverDetails");
-            setElementValue("countryCodeInputDriverDetails", itiDriverDetails);
-            setElementValue("phoneNumberInputDriverDetails");
-            setElementValue("cardNameInput");
-            setElementValue("cardNumberInput");
-            setElementValue("selectMonth");
-            setElementValue("selectYear");
-            setElementValue("cvcInput");
-            setElementValue("nameInputBillingInformation");
-            setElementValue("countryCodeInputBillingInformation", itiBillingInformation)
-            setElementValue("selectCountry")
-            setElementValue("phoneNumberInputBillingInformation")
-            setElementValue("addressInputBillingInformation");
-            setElementValue("cityInputBillingInformation");
-            setElementValue("postcodeInputBillingInformation");
-
-            // Edit Button behaviour
-            document.getElementById("editButton").addEventListener("click", function() {
-                const sectionOne = document.getElementById('collapseDriverDetails');
-                const inputElementsOne = sectionOne.querySelectorAll('input');
-                const editButtonLabel = document.getElementById('editButton');
-
-                // if items are not selectable
-                if (inputElementsOne[0].readOnly) {
-                    originalNameValue = document.getElementById('nameInputDriverDetails').value;
-                    originalEmailValue = document.getElementById('emailInputDriverDetails').value;
-                    originalPhoneNumberValue = document.getElementById('phoneNumberInputDriverDetails').value;
-                    originalCountryCode = itiDriverDetails.getSelectedCountryData().iso2;
-
-                    editButtonLabel.textContent = "Save";
-                    discardButton.style.display = "Block";
-                // if items are selectable
-                } else {
-                    // store edits in sessionStorage to stay on page reload
-                    storeElementValue("nameInputDriverDetails");
-                    storeElementValue("emailInputDriverDetails");
-                    storeElementValue("countryCodeInputDriverDetails", itiDriverDetails.getSelectedCountryData().iso2);
-                    storeElementValue("phoneNumberInputDriverDetails");
-
-                    editButtonLabel.textContent = "Edit";
-                    discardButton.style.display = "None";
-                }
-
-                // change state from readOnly to writable and change color accordingly
-                inputElementsOne.forEach(input => {
-                    input.readOnly = !input.readOnly;
-                    // if items are not selectable
-                    if (input.readOnly) {
-                        input.style.backgroundColor = 'transparent';
-                    // if items are selectable
-                    } else {
-                        input.style.backgroundColor = '#fff';
-                    }
-                });
-            });
-
-            // Discard Button behaviour
-            document.getElementById("discardButton").addEventListener("click", function() {
-                const inputElementsOne = document.getElementById('collapseDriverDetails').querySelectorAll('input');
-                const editButtonLabel = document.getElementById('editButton');
-                const discardButtonLabel = document.getElementById('discardButton');
-
-                // change values to original values before editing
-                document.getElementById('nameInputDriverDetails').value = originalNameValue;
-                document.getElementById('emailInputDriverDetails').value = originalEmailValue;
-                itiDriverDetails.setCountry(originalCountryCode);
-                document.getElementById('phoneNumberInputDriverDetails').value = originalPhoneNumberValue;
-
-                // change button's display
-                editButtonLabel.textContent = "Edit";
-                discardButtonLabel.style.display = "None";
-
-                // change back to not selectable and original background color
-                inputElementsOne.forEach(input => {
-                    input.readOnly = !input.readOnly;
-                    input.style.backgroundColor = 'transparent';
-                });
-            });
-
-            // Store input field values in sessionStorage when they change
-            $("input").on("input", function() {
-                const inputId = $(this).attr("id");
-                if (
-                    inputId !== "nameInputDriverDetails" &&
-                    inputId !== "emailInputDriverDetails" &&
-                    inputId !== "phoneNumberInputDriverDetails"
-                ) {
-                    if (inputId !== "phoneNumberInputBillingInformation") {
-                        storeElementValue(inputId);
-                    } else {
-                        storeElementValue("countryCodeInputBillingInformation", itiBillingInformation.getSelectedCountryData().iso2);
-                        storeElementValue(inputId);
-                    }
-                }
-            });
-
-            // Store select element values in sessionStorage when they change
-            $("select").on("change", function () {
-                const selectId = $(this).attr("id");
-                storeElementValue(selectId, $(this).val());
-            });
-
-            // Prevent form submission if any field fails validation
-            $("#paymentForm").submit(function (event) {
-                // Perform your validation checks here
-                if (!validateAllFields()) {
-                    event.preventDefault(); // Prevent form submission
-                }
-            });
-        });
-
-        // Store collapse state of each accordion item
-        function toggleCollapseState(collapseElement, sessionStorageKey) {
-            // Check if sessionStorageKey is not set and the collapsible element doesn't have the class "show"
-            if (!sessionStorage.getItem(sessionStorageKey) && !collapseElement.hasClass("show")) {
-                sessionStorage.setItem(sessionStorageKey, "collapsed");
-            }
-
-            const isCollapsed = sessionStorage.getItem(sessionStorageKey) === "collapsed";
-
-            if (isCollapsed) {
-                collapseElement.removeClass("show");
-            } else {
-                collapseElement.addClass("show");
-            }
-
-            collapseElement.on("shown.bs.collapse", () => {
-                sessionStorage.setItem(sessionStorageKey, "expanded");
-            });
-
-            collapseElement.on("hidden.bs.collapse", () => {
-                sessionStorage.setItem(sessionStorageKey, "collapsed");
-            });
-        }
-
-        // Store input field values in sessionStorage
-        function storeElementValue(inputId, value = 0) {
-            const inputElement = $("#" + inputId);
-            if (value === 0) {
-                const elementValue = inputElement.val();
-                sessionStorage.setItem(inputId, elementValue);
-            // If we're setting Country Code
-            } else {
-                sessionStorage.setItem(inputId, value);
-            }
-        }
-
-        // Retrieve and set input field values from sessionStorage if they exist
-        function setElementValue(inputId, value = 0) {
-            const elementValue = sessionStorage.getItem(inputId);
-            if (elementValue) {
-                if (value === 0) {
-                    $("#" + inputId).val(elementValue);
-                } else {
-                    value.setCountry(sessionStorage.getItem(inputId));
-                }
-            }
-        }
-
-        // Format the Card Number as user types
-        function formatCardNumber(input) {
-            const value = input.value.replace(/\D/g, ''); // Remove non-numeric characters
-            let formattedValue = '';
-
-            for (let i = 0; i < value.length; i++) {
-                if (i % 4 === 0 && i !== 0) {
-                    formattedValue += ' ';
-                }
-                formattedValue += value[i];
-            }
-            input.value = formattedValue.slice(0, 23); // Limit the value to 19 numbers, 23 characters
-        }
-
-        // Format the CVC as user types
-        function formatCVC(input) {
-            const value = input.value.replace(/\D/g, ''); // Remove non-numeric characters
-            input.value = value.slice(0, 3); // Limit the value to 3 numbers
-        }
-
-        // Validate Input Fields
-        function validateField(inputId, validationFunction, customErrorMessage) {
-            const inputElement = $("#" + inputId);
-
-            if (inputId !== "selectYear" && inputId !== "selectMonth") {
-                inputElement.blur(function () {
-                    const inputValue = inputElement.val();
-
-                    if (!validationFunction(inputValue)) {
-                        inputElement
-                            .removeClass("border-secondary")
-                            .addClass("card border-danger is-invalid")
-                            .attr("title", customErrorMessage);
-                    } else {
-                        inputElement
-                            .removeClass("card border-danger is-invalid")
-                            .addClass("border-secondary")
-                            .removeAttr("title");
-                    }
-                });
-            } else {
-                inputElement.on("change", function () {
-                    const selectedMonth = parseInt($("#selectMonth").val(), 10);
-                    const selectedYear = parseInt($("#selectYear").val(), 10);
-
-                    if (!validateValidUntil(selectedMonth, selectedYear)) {
-                        $("#selectMonth")
-                            .removeClass("border-secondary")
-                            .addClass("card border-danger is-invalid")
-                            .attr("title", customErrorMessage);
-                    } else {
-                        $("#selectMonth")
-                            .removeClass("card border-danger is-invalid")
-                            .addClass("border-secondary")
-                            .removeAttr("title");
-                    }
-                });
-            }
-        }
-
-        // Validate All Input Fields
-        function validateAllFields() {
-            // Store input elements and their respective error messages
-            const invalidInputs = {};
-
-            // Check all the fields and add input elements that fail validation to the invalidInputs object
-            if (!validateNullWithLettersOnly($("#nameInputDriverDetails").val())) {
-                invalidInputs["nameInputDriverDetails"] = "Please enter a valid Name.";
-            }
-            if (!validateEmail($("#emailInputDriverDetails").val())) {
-                invalidInputs["emailInputDriverDetails"] = "Please enter a valid Email Address.";
-            }
-            if (!validateNull($("#phoneNumberInputDriverDetails").val())) {
-                invalidInputs["phoneNumberInputDriverDetails"] = "Please enter a valid Phone Number.";
-            }
-            if (!validateNullWithLettersOnly($("#cardNameInput").val())) {
-                invalidInputs["cardNameInput"] = "Please enter a valid Name.";
-            }
-            if (!validateCardNumber($("#cardNumberInput").val())) {
-                invalidInputs["cardNumberInput"] = "Please enter a valid Card Number.";
-            }
-
-            if (!validateValidUntil(parseInt($("#selectMonth").val(), 10), parseInt($("#selectYear").val(), 10))) {
-                invalidInputs["selectMonth"] = "Selected month cannot be before today's date.";
-            }
-
-            if (!validateCVC($("#cvcInput").val())) {
-                invalidInputs["cvcInput"] = "Please enter a valid CVC.";
-            }
-            if (!validateNullWithLettersOnly($("#nameInputBillingInformation").val())) {
-                invalidInputs["nameInputBillingInformation"] = "Please enter a valid Name.";
-            }
-            if (!validateNull($("#phoneNumberInputBillingInformation").val())) {
-                invalidInputs["phoneNumberInputBillingInformation"] = "Please enter a valid Phone Number.";
-            }
-            if (!validateNull($("#addressInputBillingInformation").val())) {
-                invalidInputs["addressInputBillingInformation"] = "Please enter a valid Address.";
-            }
-            if (!validateNullWithLettersOnly($("#cityInputBillingInformation").val())) {
-                invalidInputs["cityInputBillingInformation"] = "Please enter a valid City Name.";
-            }
-            if (!validateNull($("#postcodeInputBillingInformation").val())) {
-                invalidInputs["postcodeInputBillingInformation"] = "Please enter a valid Postcode.";
-            }
-
-            // Iterate through invalidInputs and update their properties
-            for (const inputId in invalidInputs) {
-                const errorMessage = invalidInputs[inputId];
-                $("#" + inputId)
-                    .removeClass("border-secondary")
-                    .addClass("card border-danger is-invalid")
-                    .attr("title", errorMessage);
-            }
-
-            // Return true if there are no invalid inputs, otherwise return false
-            return Object.keys(invalidInputs).length === 0;
-        }
-
-        // Define validation functions for each field
-        function validateNull(value) {
-            return value !== "";
-        }
-
-        function validateNullWithLettersOnly(value) {
-            // Use a regular expression to check if the value contains only letters (with spaces allowed)
-            return value !== "" && /^[A-Za-z\s]*$/.test(value);
-        }
-
-        function validateEmail(email) {
-            // Use a regular expression to check if the email address is valid
-            return /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/.test(email);
-        }
-
-        function validateCardNumber(cardNumber) {
-            // Check if the card number is not empty and has a length between 19 and 23 characters
-            return cardNumber.length >= 19 && cardNumber.length <= 23;
-        }
-
-        function validateCVC(cvc) {
-            return cvc.length === 3;
-        }
-
-        // Check if the selected month and year are before today's date
-        function validateValidUntil(selectedMonth, selectedYear) {
-            const currentDate = new Date();
-            const currentYear = currentDate.getFullYear();
-            const currentMonth = currentDate.getMonth() + 1; // Month is 0-based, so add 1 to get the correct month
-
-            return ((selectedMonth >= currentMonth) || (selectedYear > currentYear));
-        }
-
-        // Submit the logout form and redirect to the login page with a success message
-        function logoutAndRedirect() {
-            // Clear stored dates from local storage
-            sessionStorage.clear();
-
-            // Submit the logout form
-            document.getElementById("logout-form").submit();
-        }
-    </script>
     <style>
         .sticky-right-fieldset {
             position: sticky;
@@ -465,6 +72,7 @@
     </div>
 </nav>
 <!-- Body -->
+
 <div class="pb-4 px-4" style="padding-top: 125px">
     <div class="card border-secondary mx-auto" style="min-width: 1000px; max-width: 1500px; width: 100%;">
         <div class="card card-header">
@@ -1121,4 +729,398 @@
     </div>
 </div>
 </body>
+<script>
+        $(document).ready(function() {
+            if (sessionStorage.getItem("selectedVehicleClass") === "Economy") {
+                $(".border-secondary").removeClass("border-secondary").addClass("border-info");
+                $(".list-group-item-primary").removeClass("list-group-item-primary").addClass("list-group-item-info");
+                $(".btn-primary").removeClass("btn-primary").addClass("btn-info");
+            } else if (sessionStorage.getItem("selectedVehicleClass") === "Gold") {
+                $(".border-secondary").removeClass("border-secondary").addClass("border-warning");
+                $(".list-group-item-primary").removeClass("list-group-item-primary").addClass("list-group-item-warning");
+                $(".btn-primary").removeClass("btn-primary").addClass("btn-warning");
+            }
+
+            // Retrieve the stored Price and update the value in the HTML
+            const pricePerDaySpan = document.getElementById('price-per-day').getElementsByTagName("small")[0];
+            const totalPriceSpan = document.getElementById('total-price').getElementsByTagName("span")[0];
+            pricePerDaySpan.textContent = sessionStorage.getItem("selectedPricePerDay") + "€/ day";
+            totalPriceSpan.textContent = sessionStorage.getItem("selectedTotalPrice") + "€";
+
+            // Handle Phone Number in Driver Details
+            var phoneNumberDriverDetails = document.getElementById("phoneNumberInputDriverDetails");
+
+            var itiDriverDetails = window.intlTelInput(phoneNumberDriverDetails, {
+                separateDialCode: true,
+                preferredCountries: ["pt", "gb", "us"],
+                autoPlaceholder: "aggressive",
+                formatOnDisplay: false,
+                utilsScript: "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.3/js/utils.js"
+            });
+
+            // Handle Phone Number in Billing Information
+            var phoneNumberBillingInformation = document.getElementById("phoneNumberInputBillingInformation");
+
+            var itiBillingInformation = window.intlTelInput(phoneNumberBillingInformation, {
+                separateDialCode: true,
+                preferredCountries: ["pt", "gb", "us"],
+                autoPlaceholder: "aggressive",
+                formatOnDisplay: false,
+                utilsScript: "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.3/js/utils.js"
+            });
+
+            // Handle Country Selection
+            if (!sessionStorage.getItem("countryCodeInputDriverDetails")) {
+                storedCountryCodeDriverDetails = itiDriverDetails.getSelectedCountryData().iso2;
+            }
+
+            // Loop through the options and set the selected attribute for the matching ISO code
+            for (var i = 0; i < document.getElementById("selectCountry").options.length; i++) {
+                if (selectCountry.options[i].value === storedCountryCodeDriverDetails) {
+                    selectCountry.options[i].selected = true;
+                }
+            }
+
+            // Toggle Collapse States
+            toggleCollapseState($("#collapseDriverDetails"), "collapseStateDriverDetails");
+            toggleCollapseState($("#collapsePaymentMethod"), "collapseStatePaymentMethod");
+            toggleCollapseState($("#collapseBillingInformation"), "collapseStateBillingInformation");
+
+            // Add validation for each input field
+            validateField("nameInputDriverDetails", validateNullWithLettersOnly, "Please enter a valid Name.");
+            validateField("emailInputDriverDetails", validateEmail, "Please enter a valid Email Address.");
+            validateField("phoneNumberInputDriverDetails", validateNull, "Please enter a valid Phone Number.");
+            validateField("cardNameInput", validateNullWithLettersOnly, "Please enter a valid Name.");
+            validateField("cardNumberInput", validateCardNumber, "Please enter a valid Card Number.");
+            validateField("selectMonth", validateValidUntil, "Selected month cannot be before today's date.");
+            validateField("selectYear", validateValidUntil, "Selected month cannot be before today's date.");
+            validateField("cvcInput", validateCVC, "Please enter a valid CVC.");
+            validateField("nameInputBillingInformation", validateNullWithLettersOnly, "Please enter a valid Name.");
+            validateField("phoneNumberInputBillingInformation", validateNull, "Please enter a valid Phone Number.");
+            validateField("addressInputBillingInformation", validateNull, "Please enter a valid Address.");
+            validateField("cityInputBillingInformation", validateNullWithLettersOnly, "Please enter a valid City Name.");
+            validateField("postcodeInputBillingInformation", validateNull, "Please enter a valid Postcode.");
+
+            // Update stored input values for each input field
+            setElementValue("nameInputDriverDetails");
+            setElementValue("emailInputDriverDetails");
+            setElementValue("countryCodeInputDriverDetails", itiDriverDetails);
+            setElementValue("phoneNumberInputDriverDetails");
+            setElementValue("cardNameInput");
+            setElementValue("cardNumberInput");
+            setElementValue("selectMonth");
+            setElementValue("selectYear");
+            setElementValue("cvcInput");
+            setElementValue("nameInputBillingInformation");
+            setElementValue("countryCodeInputBillingInformation", itiBillingInformation)
+            setElementValue("selectCountry")
+            setElementValue("phoneNumberInputBillingInformation")
+            setElementValue("addressInputBillingInformation");
+            setElementValue("cityInputBillingInformation");
+            setElementValue("postcodeInputBillingInformation");
+
+            // Edit Button behaviour
+            document.getElementById("editButton").addEventListener("click", function() {
+                const sectionOne = document.getElementById('collapseDriverDetails');
+                const inputElementsOne = sectionOne.querySelectorAll('input');
+                const editButtonLabel = document.getElementById('editButton');
+
+                // if items are not selectable
+                if (inputElementsOne[0].readOnly) {
+                    originalNameValue = document.getElementById('nameInputDriverDetails').value;
+                    originalEmailValue = document.getElementById('emailInputDriverDetails').value;
+                    originalPhoneNumberValue = document.getElementById('phoneNumberInputDriverDetails').value;
+                    originalCountryCode = itiDriverDetails.getSelectedCountryData().iso2;
+
+                    editButtonLabel.textContent = "Save";
+                    discardButton.style.display = "Block";
+                // if items are selectable
+                } else {
+                    // store edits in sessionStorage to stay on page reload
+                    storeElementValue("nameInputDriverDetails");
+                    storeElementValue("emailInputDriverDetails");
+                    storeElementValue("countryCodeInputDriverDetails", itiDriverDetails.getSelectedCountryData().iso2);
+                    storeElementValue("phoneNumberInputDriverDetails");
+
+                    editButtonLabel.textContent = "Edit";
+                    discardButton.style.display = "None";
+                }
+
+                // change state from readOnly to writable and change color accordingly
+                inputElementsOne.forEach(input => {
+                    input.readOnly = !input.readOnly;
+                    // if items are not selectable
+                    if (input.readOnly) {
+                        input.style.backgroundColor = 'transparent';
+                    // if items are selectable
+                    } else {
+                        input.style.backgroundColor = '#fff';
+                    }
+                });
+            });
+
+            // Discard Button behaviour
+            document.getElementById("discardButton").addEventListener("click", function() {
+                const inputElementsOne = document.getElementById('collapseDriverDetails').querySelectorAll('input');
+                const editButtonLabel = document.getElementById('editButton');
+                const discardButtonLabel = document.getElementById('discardButton');
+
+                // change values to original values before editing
+                document.getElementById('nameInputDriverDetails').value = originalNameValue;
+                document.getElementById('emailInputDriverDetails').value = originalEmailValue;
+                itiDriverDetails.setCountry(originalCountryCode);
+                document.getElementById('phoneNumberInputDriverDetails').value = originalPhoneNumberValue;
+
+                // change button's display
+                editButtonLabel.textContent = "Edit";
+                discardButtonLabel.style.display = "None";
+
+                // change back to not selectable and original background color
+                inputElementsOne.forEach(input => {
+                    input.readOnly = !input.readOnly;
+                    input.style.backgroundColor = 'transparent';
+                });
+            });
+
+            // Store input field values in sessionStorage when they change
+            $("input").on("input", function() {
+                const inputId = $(this).attr("id");
+                if (
+                    inputId !== "nameInputDriverDetails" &&
+                    inputId !== "emailInputDriverDetails" &&
+                    inputId !== "phoneNumberInputDriverDetails"
+                ) {
+                    if (inputId !== "phoneNumberInputBillingInformation") {
+                        storeElementValue(inputId);
+                    } else {
+                        storeElementValue("countryCodeInputBillingInformation", itiBillingInformation.getSelectedCountryData().iso2);
+                        storeElementValue(inputId);
+                    }
+                }
+            });
+
+            // Store select element values in sessionStorage when they change
+            $("select").on("change", function () {
+                const selectId = $(this).attr("id");
+                storeElementValue(selectId, $(this).val());
+            });
+
+            // Prevent form submission if any field fails validation
+            $("#paymentForm").submit(function (event) {
+                // Perform your validation checks here
+                if (!validateAllFields()) {
+                    event.preventDefault(); // Prevent form submission
+                }
+            });
+        });
+
+        // Store collapse state of each accordion item
+        function toggleCollapseState(collapseElement, sessionStorageKey) {
+            // Check if sessionStorageKey is not set and the collapsible element doesn't have the class "show"
+            if (!sessionStorage.getItem(sessionStorageKey) && !collapseElement.hasClass("show")) {
+                sessionStorage.setItem(sessionStorageKey, "collapsed");
+            }
+
+            const isCollapsed = sessionStorage.getItem(sessionStorageKey) === "collapsed";
+
+            if (isCollapsed) {
+                collapseElement.removeClass("show");
+            } else {
+                collapseElement.addClass("show");
+            }
+
+            collapseElement.on("shown.bs.collapse", () => {
+                sessionStorage.setItem(sessionStorageKey, "expanded");
+            });
+
+            collapseElement.on("hidden.bs.collapse", () => {
+                sessionStorage.setItem(sessionStorageKey, "collapsed");
+            });
+        }
+
+        // Store input field values in sessionStorage
+        function storeElementValue(inputId, value = 0) {
+            const inputElement = $("#" + inputId);
+            if (value === 0) {
+                const elementValue = inputElement.val();
+                sessionStorage.setItem(inputId, elementValue);
+            // If we're setting Country Code
+            } else {
+                sessionStorage.setItem(inputId, value);
+            }
+        }
+
+        // Retrieve and set input field values from sessionStorage if they exist
+        function setElementValue(inputId, value = 0) {
+            const elementValue = sessionStorage.getItem(inputId);
+            if (elementValue) {
+                if (value === 0) {
+                    $("#" + inputId).val(elementValue);
+                } else {
+                    value.setCountry(sessionStorage.getItem(inputId));
+                }
+            }
+        }
+
+        // Format the Card Number as user types
+        function formatCardNumber(input) {
+            const value = input.value.replace(/\D/g, ''); // Remove non-numeric characters
+            let formattedValue = '';
+
+            for (let i = 0; i < value.length; i++) {
+                if (i % 4 === 0 && i !== 0) {
+                    formattedValue += ' ';
+                }
+                formattedValue += value[i];
+            }
+            input.value = formattedValue.slice(0, 23); // Limit the value to 19 numbers, 23 characters
+        }
+
+        // Format the CVC as user types
+        function formatCVC(input) {
+            const value = input.value.replace(/\D/g, ''); // Remove non-numeric characters
+            input.value = value.slice(0, 3); // Limit the value to 3 numbers
+        }
+
+        // Validate Input Fields
+        function validateField(inputId, validationFunction, customErrorMessage) {
+            const inputElement = $("#" + inputId);
+
+            if (inputId !== "selectYear" && inputId !== "selectMonth") {
+                inputElement.blur(function () {
+                    const inputValue = inputElement.val();
+
+                    if (!validationFunction(inputValue)) {
+                        inputElement
+                            .removeClass("border-secondary")
+                            .addClass("card border-danger is-invalid")
+                            .attr("title", customErrorMessage);
+                    } else {
+                        inputElement
+                            .removeClass("card border-danger is-invalid")
+                            .addClass("border-secondary")
+                            .removeAttr("title");
+                    }
+                });
+            } else {
+                inputElement.on("change", function () {
+                    const selectedMonth = parseInt($("#selectMonth").val(), 10);
+                    const selectedYear = parseInt($("#selectYear").val(), 10);
+
+                    if (!validateValidUntil(selectedMonth, selectedYear)) {
+                        $("#selectMonth")
+                            .removeClass("border-secondary")
+                            .addClass("card border-danger is-invalid")
+                            .attr("title", customErrorMessage);
+                    } else {
+                        $("#selectMonth")
+                            .removeClass("card border-danger is-invalid")
+                            .addClass("border-secondary")
+                            .removeAttr("title");
+                    }
+                });
+            }
+        }
+
+        // Validate All Input Fields
+        function validateAllFields() {
+            // Store input elements and their respective error messages
+            const invalidInputs = {};
+
+            // Check all the fields and add input elements that fail validation to the invalidInputs object
+            if (!validateNullWithLettersOnly($("#nameInputDriverDetails").val())) {
+                invalidInputs["nameInputDriverDetails"] = "Please enter a valid Name.";
+            }
+            if (!validateEmail($("#emailInputDriverDetails").val())) {
+                invalidInputs["emailInputDriverDetails"] = "Please enter a valid Email Address.";
+            }
+            if (!validateNull($("#phoneNumberInputDriverDetails").val())) {
+                invalidInputs["phoneNumberInputDriverDetails"] = "Please enter a valid Phone Number.";
+            }
+            if (!validateNullWithLettersOnly($("#cardNameInput").val())) {
+                invalidInputs["cardNameInput"] = "Please enter a valid Name.";
+            }
+            if (!validateCardNumber($("#cardNumberInput").val())) {
+                invalidInputs["cardNumberInput"] = "Please enter a valid Card Number.";
+            }
+
+            if (!validateValidUntil(parseInt($("#selectMonth").val(), 10), parseInt($("#selectYear").val(), 10))) {
+                invalidInputs["selectMonth"] = "Selected month cannot be before today's date.";
+            }
+
+            if (!validateCVC($("#cvcInput").val())) {
+                invalidInputs["cvcInput"] = "Please enter a valid CVC.";
+            }
+            if (!validateNullWithLettersOnly($("#nameInputBillingInformation").val())) {
+                invalidInputs["nameInputBillingInformation"] = "Please enter a valid Name.";
+            }
+            if (!validateNull($("#phoneNumberInputBillingInformation").val())) {
+                invalidInputs["phoneNumberInputBillingInformation"] = "Please enter a valid Phone Number.";
+            }
+            if (!validateNull($("#addressInputBillingInformation").val())) {
+                invalidInputs["addressInputBillingInformation"] = "Please enter a valid Address.";
+            }
+            if (!validateNullWithLettersOnly($("#cityInputBillingInformation").val())) {
+                invalidInputs["cityInputBillingInformation"] = "Please enter a valid City Name.";
+            }
+            if (!validateNull($("#postcodeInputBillingInformation").val())) {
+                invalidInputs["postcodeInputBillingInformation"] = "Please enter a valid Postcode.";
+            }
+
+            // Iterate through invalidInputs and update their properties
+            for (const inputId in invalidInputs) {
+                const errorMessage = invalidInputs[inputId];
+                $("#" + inputId)
+                    .removeClass("border-secondary")
+                    .addClass("card border-danger is-invalid")
+                    .attr("title", errorMessage);
+            }
+
+            // Return true if there are no invalid inputs, otherwise return false
+            return Object.keys(invalidInputs).length === 0;
+        }
+
+        // Define validation functions for each field
+        function validateNull(value) {
+            return value !== "";
+        }
+
+        function validateNullWithLettersOnly(value) {
+            // Use a regular expression to check if the value contains only letters (with spaces allowed)
+            return value !== "" && /^[A-Za-z\s]*$/.test(value);
+        }
+
+        function validateEmail(email) {
+            // Use a regular expression to check if the email address is valid
+            return /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/.test(email);
+        }
+
+        function validateCardNumber(cardNumber) {
+            // Check if the card number is not empty and has a length between 19 and 23 characters
+            return cardNumber.length >= 19 && cardNumber.length <= 23;
+        }
+
+        function validateCVC(cvc) {
+            return cvc.length === 3;
+        }
+
+        // Check if the selected month and year are before today's date
+        function validateValidUntil(selectedMonth, selectedYear) {
+            const currentDate = new Date();
+            const currentYear = currentDate.getFullYear();
+            const currentMonth = currentDate.getMonth() + 1; // Month is 0-based, so add 1 to get the correct month
+
+            return ((selectedMonth >= currentMonth) || (selectedYear > currentYear));
+        }
+
+        // Submit the logout form and redirect to the login page with a success message
+        function logoutAndRedirect() {
+            // Clear stored dates from local storage
+            sessionStorage.clear();
+
+            // Submit the logout form
+            document.getElementById("logout-form").submit();
+        }
+    </script>
+
 </html>
