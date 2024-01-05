@@ -164,10 +164,10 @@ class Product:
         self.updated_rows_else = ()
         for row in result:
             vehicle_id = row[0] # Get the "id" value
-            vehicle_status = row[-3]  # Get the "vehicle_status" value
-            vehicle_available_again = row[-4] # Get the "vehicle_available_again" value
-            next_ved_str = row[-5]  # Get the "next_ved" value
-            next_check_up_str = row[-6]  # Get the "next_check_up" value
+            vehicle_status = row[-1]  # Get the "vehicle_status" value
+            vehicle_available_again = row[-2] # Get the "vehicle_available_again" value
+            next_ved_str = row[-3]  # Get the "next_ved" value
+            next_check_up_str = row[-5]  # Get the "next_check_up" value
             today = date.today()
             next_check_up = datetime.strptime(next_check_up_str, "%d/%m/%Y").date()
             days_difference_check_up = (next_check_up - today).days
@@ -214,10 +214,10 @@ class Product:
                     self.table.insert("", "end", values=row[:-2], tags=("ved_occurring",))
             # if <= 30 days until next ved, update the row
             elif days_difference_ved <= 30:
-                # if days_difference is positive then car is available
+                # if days_difference is positive then vehicle is available
                 if days_difference_ved > 0:
                     self.table.insert("", "end", values=row[:-2], tags=("ved_soon",))
-                # if days_difference is negative then car isn't legal and can't circulate
+                # if days_difference is negative then vehicle isn't legal and can't circulate
                 else:
                     self.table.insert("", "end", values=row[:-2], tags=("not_ready",))
                     if not vehicle_status == "not ready":
@@ -226,12 +226,13 @@ class Product:
                         self.updated_rows_not_ready += vehicle_available_again, vehicle_status, vehicle_id
             # if vehicle isn't any of the above, update the row
             elif vehicle_status == "ready":
-                self.table.insert("", "end", values=row[:-2])
+                self.table.insert("", "end", values=row[:-1])
             else:
                 vehicle_status = "ready"
                 self.updated_rows_else += vehicle_status, vehicle_id
 
-        # After iterating through the result set, update the database with the collected changes
+            self.table.insert("", "end", values=row[:-2])
+
         self.update_database()
         self.update_error_label()
 

@@ -1,63 +1,61 @@
 {% extends 'partials/base.html' %}
 {% block main %}
-    <div class="text-center text-control mb-4">
+    <div class="text-center mb-4">
         <p>Welcome, {{ session['name'] }} {{ session['surname'] }}.</p>
     </div>
-    <div class="container">
-        <div class="row justify-content-between">
-            <!-- Economy Class -->
-            <div class="col-lg-4 col-md-6">
-                <div class="card card-header card-hover-effect border-info rounded-3">
-                    <!-- Header Title -->
-                    <h4 class="card-body card-economy text-center mb-3">Economy Class</h4>
-                    <!-- Preview Image -->
-                    <a href="/economy-class"><img class="rounded" alt="Economy Class" src="{{ url_for('static', filename='images/citroen-c1.jpg') }}"></a>
-                    <!-- Category Description List -->
-                    <ol class="mx-4 my-3">
-                        <li class="lead mb-2 ">Why am great</li>
-                        <li class="lead mb-2">Why am great 2</li>
-                        <li class="lead mb-2">Why am great 3</li>
-                        <li class="lead">Why am great 4</li>
-                    </ol>
-                    <!-- Select Button -->
-                    <a class="btn btn-info btn-block btn-choose" href="/economy-class">Choose Me</a>
-                </div>
+    <div class="row justify-content-between">
+        <!-- Economy Class -->
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="card card-header card-hover-effect border-info rounded-3">
+                <!-- Header Title -->
+                <h4 class="card-body color-economy text-center rounded mb-3">Economy Class</h4>
+                <!-- Preview Image -->
+                <a href="/economy-class"><img class="rounded" alt="Economy Class" src="{{ url_for('static', filename='images/citroen-c1.jpg') }}"></a>
+                <!-- Category Description List -->
+                <ol class="mx-4 my-3">
+                    <li class="lead mb-2 ">Why am great</li>
+                    <li class="lead mb-2">Why am great 2</li>
+                    <li class="lead mb-2">Why am great 3</li>
+                    <li class="lead">Why am great 4</li>
+                </ol>
+                <!-- Select Button -->
+                <a class="btn btn-info rounded" href="/economy-class">Choose Me</a>
             </div>
-            <!-- Silver Class -->
-            <div class="col-lg-4 col-md-6">
-                <div class="card card-header border-secondary card-hover-effect rounded-3">
-                    <!-- Header Title -->
-                    <h4 class="card-body card-silver text-center mb-3">Silver Class</h4>
-                    <!-- Preview Image -->
-                    <a href="/silver-class"><img class="rounded" alt="Silver Class" src="{{ url_for('static', filename='images/renault-zoe.jpg') }}"></a>
-                    <!-- Category Description List -->
-                    <ol class="mx-4 my-3">
-                        <li class="lead mb-2 ">Why am great</li>
-                        <li class="lead mb-2">Why am great 2</li>
-                        <li class="lead mb-2">Why am great 3</li>
-                        <li class="lead">Why am great 4</li>
-                    </ol>
-                    <!-- Select Button -->
-                    <a class="btn list-group-item-dark btn-secondary border-secondary btn-block" href="silver-class">Choose Me</a>
-                </div>
+        </div>
+        <!-- Silver Class -->
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="card card-header card-hover-effect border-silver rounded-3">
+                <!-- Header Title -->
+                <h4 class="card-body color-silver text-center rounded mb-3">Silver Class</h4>
+                <!-- Preview Image -->
+                <a href="/silver-class"><img class="rounded" alt="Silver Class" src="{{ url_for('static', filename='images/renault-zoe.jpg') }}"></a>
+                <!-- Category Description List -->
+                <ol class="mx-4 my-3">
+                    <li class="lead mb-2 ">Why am great</li>
+                    <li class="lead mb-2">Why am great 2</li>
+                    <li class="lead mb-2">Why am great 3</li>
+                    <li class="lead">Why am great 4</li>
+                </ol>
+                <!-- Select Button -->
+                <a class="btn btn-dark rounded" href="silver-class">Choose Me</a>
             </div>
-            <!-- Gold Class -->
-            <div class="col-lg-4 col-md-6">
-                <div class="card card-header border-warning card-hover-effect rounded-3">
-                    <!-- Header Title -->
-                    <h4 class="card-body card-gold text-center mb-3">Gold Class</h4>
-                    <!-- Preview Image -->
-                    <a href="/gold-class"><img class="rounded" alt="Gold Class" src="{{ url_for('static', filename='images/tesla-model-3.jpg') }}"></a>
-                    <!-- Category Description List -->
-                    <ol class="mx-4 my-3">
-                        <li class="lead mb-2 ">Why am great</li>
-                        <li class="lead mb-2">Why am great 2</li>
-                        <li class="lead mb-2">Why am great 3</li>
-                        <li class="lead">Why am great 4</li>
-                    </ol>
-                    <!-- Select Button -->
-                    <a class="btn btn-warning btn-block" href="gold-class">Choose Me</a>
-                </div>
+        </div>
+        <!-- Gold Class -->
+        <div class="col-lg-4 col-md-6 mb-4 mx-auto">
+            <div class="card card-header border-warning card-hover-effect rounded-3">
+                <!-- Header Title -->
+                <h4 class="card-body color-gold text-center rounded mb-3">Gold Class</h4>
+                <!-- Preview Image -->
+                <a href="/gold-class"><img class="rounded" alt="Gold Class" src="{{ url_for('static', filename='images/tesla-model-3.jpg') }}"></a>
+                <!-- Category Description List -->
+                <ol class="mx-4 my-3">
+                    <li class="lead mb-2 ">Why am great</li>
+                    <li class="lead mb-2">Why am great 2</li>
+                    <li class="lead mb-2">Why am great 3</li>
+                    <li class="lead">Why am great 4</li>
+                </ol>
+                <!-- Select Button -->
+                <a class="btn btn-warning rounded" href="gold-class">Choose Me</a>
             </div>
         </div>
     </div>

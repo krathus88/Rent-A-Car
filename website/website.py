@@ -196,13 +196,21 @@ def economy_class():
         user = User.query.get(session['user_id'])
         session['name'] = user.name
         session['surname'] = user.surname
-        # Get the selected pickup and drop-off dates from the request parameters
+
         global pickup_date_str, dropoff_date_str
 
+        print("pickup_date_str", pickup_date_str)
+        print("dropoff_date_str", dropoff_date_str)
+
+        # Get the selected pickup and drop-off dates from the request parameters
         pickup_date_str = request.args.get('pickup_date')
+        print("pickup_date_str", pickup_date_str)
         dropoff_date_str = request.args.get('dropoff_date')
+        print("dropoff_date_str", dropoff_date_str)
+
         # If pickup and drop-off dates are not provided, simply render the initial page
         if not pickup_date_str or not dropoff_date_str:
+            print("not found pickup/dropoff date")
             today = date.today().strftime("%d/%m/%Y")
             return render_template("economy-class.html", today=today, vehicles=[], current_page=1, total_pages=0)
 

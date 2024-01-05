@@ -5,7 +5,7 @@
         padding-bottom: 0 !important;
     }
     main {
-        padding-top: 88px;
+        margin-top: 88px !important;
     }
 }
 
@@ -15,7 +15,7 @@
         height: 88px !important;
     }
     main {
-        padding-top: 85px !important;
+        margin-top: 85px !important;
     }
 }
 
@@ -51,14 +51,27 @@ footer {
     transform: scale(1.04); /* Scaling the card to 104% on hover */
 }
 
-.card-economy {
+.color-economy {
     background-color: #c0e2ff;
 }
 
-.card-silver {
+.color-silver {
     background-color: #04040421;
 }
 
-.card-gold {
+.color-gold {
     background-color: #ffd9a8;
+}
+
+.border-silver {
+    border-color: #a8aeb5;
+}
+
+.btn-dark {
+    --bs-btn-bg: #757575;
+}
+
+.vehicle-container {
+    max-width: 1500px;
+    width: 100%;
 }
