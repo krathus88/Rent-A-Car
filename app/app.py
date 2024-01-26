@@ -301,7 +301,7 @@ class Product:
         if not result:
             balance = 10000
             query = "INSERT INTO balance ('balance') VALUES (?)"
-            self.db_query(query, balance)
+            self.db_query(query, (balance,))
         # If there are entries in the database
         else:
             if self.transaction_cost_car:
